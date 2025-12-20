@@ -1,0 +1,65 @@
+﻿@page "/TrendAlert"
+
+<PageTitle>Trend Alerts</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+
+    <!-- Header -->
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h3">Trend Alerts</MudText>
+    </MudStack>
+
+    <MudText Typo="Typo.body1" Class="mb-6">
+        3 tren real-time terpanas di platform utama (TikTok & Instagram).
+        Hanya menampilkan <b>Tren Audio/Musik</b> dan <b>Tren Hashtag</b> yang sedang naik.
+    </MudText>
+
+    <!-- Trend List -->
+    <MudGrid>
+
+        <!-- Trend Item 1 -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">
+                    🎵 Audio Viral: “Night Pulse”
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    Digunakan oleh kreator lifestyle & fashion dalam 24 jam terakhir.
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+        <!-- Trend Item 2 -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">
+                    #SelfImprove2025
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    Lonjakan engagement tinggi di konten edukasi & motivasi.
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+        <!-- Trend Item 3 -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">
+                    🎶 Audio Remix: “Slow Burn”
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    Populer di Reels & TikTok short storytelling.
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+</MudContainer>

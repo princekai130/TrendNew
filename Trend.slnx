@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Trend.MudWeb/Trend.MudWeb.csproj" />
+  <Project Path="Trend.MudWebDbTestConsole/Trend.MudWebDbTestConsole.csproj" Id="c9681371-0ea8-456a-8b5e-dbf75fa72d9b" />
+</Solution>

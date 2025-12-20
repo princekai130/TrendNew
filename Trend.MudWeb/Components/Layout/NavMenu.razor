@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="TrendAlert" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.NotificationsActive">Trend Alert</MudNavLink>
+            <MudNavLink Href="TrendExploler" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Search">Trend Explorer</MudNavLink>
+            
+            <MudNavGroup Title="Analytics" Icon="@Icons.Material.Filled.BarChart" Expanded="true">
+                <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
+                    <Authorized>
+                        <MudNavLink Href="CompetitorInsight" Icon="@Icons.Material.Filled.Groups">Competitor Insight</MudNavLink>
+                        <MudNavLink Href="ContentBoostPotential" Icon="@Icons.Material.Filled.RocketLaunch">Content Boost</MudNavLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        @* Menampilkan menu terkunci untuk mendorong konversi premium *@
+                        <MudNavLink Disabled="true" Icon="@Icons.Material.Filled.Lock">Competitor (Premium)</MudNavLink>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <MudNavLink Href="SimplePerformanceReport" Icon="@Icons.Material.Filled.AutoGraph">Performance Report</MudNavLink>
+            </MudNavGroup>
+
+            @* Fitur Logout *@
+            <MudDivider Class="my-2" />
+        </Authorized>
+        <NotAuthorized>
+            <MudNavLink Href="login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+            <MudNavLink Href="register" Icon="@Icons.Material.Filled.AppRegistration">Register</MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudNavMenu>

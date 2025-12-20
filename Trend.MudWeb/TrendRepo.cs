@@ -1,0 +1,148 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Trend.MudWeb.Models;
+
+namespace Trend.MudWeb
+{
+    /// <summary>
+    /// Repositori untuk mengelola operasi basis data aplikasi TRENDZ.
+    /// Menangani logika pengambilan tren, rekomendasi konten, dan analisis kompetitor[cite: 2, 40].
+                /// </summary>
+    public class TrendRepo
+    {
+        private readonly TrendContext _context;
+
+        /// <summary>
+        /// Inisialisasi instance baru dari <see cref="TrendRepo"/>.
+        /// </summary>
+        /// <param name="context">Context database untuk aplikasi Trend[cite: 40].</param>
+        public TrendRepo(TrendContext context)
+        {
+            _context = context;
+        }
+
+        #region Dashboard & Trends
+
+        /// <summary>
+        /// Mengambil tren yang sedang viral (IsViral = true) untuk ditampilkan di widget Home
+                    /// </summary>
+        /// <returns>Daftar 3 tren dengan skor pertumbuhan tertinggi</returns>
+        public async Task<List<SocialTrend>> GetViralTrendsAsync()
+        {
+            return await _context.SocialTrends
+                .Where(t => t.IsViral == true)
+                .OrderByDescending(t => t.GrowthScore)
+                .Take(3)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Mengambil tren berdasarkan kategori niche tertentu.
+        /// Fitur ini mendukung kebutuhan 74,1% responden yang ingin mengetahui tren di niche mereka
+                    /// </summary>
+        /// <param name="nicheId">ID unik untuk kategori niche</param>
+        /// <returns>Daftar tren yang difilter berdasarkan niche.</returns>
+        public async Task<List<SocialTrend>> GetTrendsByNicheAsync(int nicheId)
+        {
+            return await _context.SocialTrends
+                .Where(t => t.NicheId == nicheId)
+                .OrderByDescending(t => t.DiscoveredAt)
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Content Recommendations
+
+        /// <summary>
+        /// Memberikan rekomendasi ide konten otomatis berdasarkan tren terbaru
+        /// Mendukung model monetisasi dengan memisahkan akses Free dan Premium
+        /// </summary>
+        /// <param name="isPremiumUser">Status langganan pengguna</param>
+        /// <returns>Daftar rekomendasi ide konten.</returns>
+        public async Task<List<ContentRecommendation>> GetLatestRecommendationsAsync(bool isPremiumUser)
+        {
+            var query = _context.ContentRecommendations
+                .Include(r => r.Trend)
+                .AsQueryable();
+
+            // Memvalidasi hak akses konten berdasarkan status langganan.
+            if (!isPremiumUser)
+            {
+                query = query.Where(r => r.IsPremiumOnly == false);
+            }
+
+            return await query
+                .OrderByDescending(r => r.RecommendationId)
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Competitor Tracking
+
+        /// <summary>
+        /// Mengambil performa konten kompetitor untuk membantu talent tetap unggul.
+        /// Sangat diminati oleh 85,2% responden survei.
+        /// </summary>
+        /// <param name="userId">ID pengguna yang melakukan pelacakan.</param>
+        /// <returns>Daftar postingan kompetitor dengan engagement terbaik</returns>
+        public async Task<List<CompetitorPost>> GetTopCompetitorPostsAsync(int userId)
+        {
+            return await _context.CompetitorPosts
+                .Include(p => p.Competitor)
+                .Where(p => p.Competitor.UserId == userId)
+                .OrderByDescending(p => p.EngagementRate)
+                .Take(10)
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Notifications & Users
+
+        /// <summary>
+        /// Mengambil notifikasi tren real-time yang belum dibaca.
+        /// Menjawab kebutuhan 92,6% responden akan notifikasi tren relevan.
+        /// </summary>
+        /// <param name="userId">ID pengguna target</param>
+        /// <returns>Daftar notifikasi terbaru</returns>
+        public async Task<List<Notification>> GetUserNotificationsAsync(int userId)
+        {
+            return await _context.Notifications
+                .Where(n => n.UserId == userId && n.IsRead == false)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
+
+
+        /// <summary>
+        /// Mengambil data user untuk mengecek status langganan secara real-time.
+        /// </summary>
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users
+                .Include(u => u.Niche)
+              .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        /// <summary>
+        /// Menambahkan user baru ke database.
+        /// </summary>
+        public async Task AddUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Mengambil semua daftar niche untuk pilihan saat registrasi.
+        /// </summary>
+        public async Task<List<Nich>> GetAllNichesAsync()
+        {
+            return await _context.Niches.OrderBy(n => n.NicheName).ToListAsync();
+        }
+
+        #endregion
+
+    }
+}
