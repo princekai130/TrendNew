@@ -11,6 +11,7 @@ namespace Trend.MudWebDbTestConsole
 {
     class Program
     {
+        // hellio
         static async Task Main(string[] args)
         {
             // 1. Konfigurasi AppSettings
