@@ -21,7 +21,9 @@ public partial class TrendContext : DbContext
 
     public virtual DbSet<Nich> Niches { get; set; }
 
-    public virtual DbSet<Notification> Notifications { get; set; }
+    // Di dalam TrendContext.cs
+    // Pastikan merujuk ke class model hasil generate, bukan class service
+    public virtual DbSet<Trend.MudWeb.Models.Notifications> Notifications { get; set; }
 
     public virtual DbSet<SocialTrend> SocialTrends { get; set; }
 
@@ -95,8 +97,10 @@ public partial class TrendContext : DbContext
                 .HasColumnName("niche_name");
         });
 
-        modelBuilder.Entity<Notification>(entity =>
+        modelBuilder.Entity<Notifications>(entity =>
         {
+            entity.HasKey(e => e.NotificationId);
+
             entity.ToTable("notifications");
 
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");

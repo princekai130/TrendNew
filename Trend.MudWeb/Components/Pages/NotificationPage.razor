@@ -1,0 +1,88 @@
+﻿@page "/notifications"
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthProvider
+
+<PageTitle>Notifikasi Tren - Trendz</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Primary" Size="Size.Large" />
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Notifikasi</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Update terbaru mengenai tren viral dan aktivitas akun Anda.</MudText>
+        </div>
+    </MudStack>
+
+    @if (_dbNotifications == null || !_dbNotifications.Any())
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
+            Belum ada notifikasi baru untuk saat ini.
+        </MudAlert>
+    }
+    else
+    {
+        <MudStack Spacing="3">
+            @foreach (var note in _dbNotifications)
+            {
+                @* PERBAIKAN: Gunakan ?? false untuk konversi bool? ke bool *@
+                <MudPaper Class="pa-4 rounded-lg" Elevation="2" Style="@(!(note.IsRead ?? false) ? "border-left: 4px solid var(--mud-palette-primary);" : "")">
+                    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack Spacing="1">
+                            @* PERBAIKAN: Gunakan ?? false *@
+                            <MudText Typo="Typo.body1" Class="@(!(note.IsRead ?? false) ? "fw-bold" : "")">
+                                @note.Message
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
+                                @* PERBAIKAN: Jika CreatedAt adalah string di DB, hapus parameter ToString *@
+                                @note.CreatedAt
+                            </MudText>
+                        </MudStack>
+
+                        @* PERBAIKAN: Gunakan ?? false *@
+                        @if (!(note.IsRead ?? false))
+                        {
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="@(() => MarkAsRead(note))">
+                                Tandai Dibaca
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    private List<Trend.MudWeb.Models.Notifications> _dbNotifications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var userIdClaim = user.FindFirst("UserId")?.Value;
+        int userId = string.IsNullOrEmpty(userIdClaim) ? 1 : int.Parse(userIdClaim);
+
+        _dbNotifications = await Repo.GetUserNotificationsAsync(userId);
+    }
+
+    private async Task MarkAsRead(Trend.MudWeb.Models.Notifications note)
+    {
+        note.IsRead = true;
+        // Jika Anda punya method di repo untuk simpan status ke DB:
+        // await Repo.MarkNotificationAsReadAsync(note.NotificationId);
+
+        Snackbar.Add("Notifikasi ditandai sebagai dibaca", Severity.Success);
+        StateHasChanged();
+    }
+}

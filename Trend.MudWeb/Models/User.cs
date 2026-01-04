@@ -25,5 +25,5 @@ public partial class User
 
     public virtual Nich Niche { get; set; }
 
-    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public virtual ICollection<Notifications> Notifications { get; set; } = new List<Notifications>();
 }

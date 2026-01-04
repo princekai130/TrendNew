@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
 using MudBlazor.Services;
 using Trend.MudWeb;
 using Trend.MudWeb.Components;
 using Trend.MudWeb.Models;
+using Trend.MudWeb.Services; // Pastikan namespace ini sesuai dengan folder tempat Anda menyimpan class tadi
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,26 +14,48 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<TrendContext>(options =>
     options.UseSqlite(connectionString));
 
-// 2. Registrasi Repository sebagai Scoped
-builder.Services.AddScoped<TrendRepo>();
+// --- REGISTRASI SERVICES BERDASARKAN CLASS DIAGRAM LAPORAN ---
 
-// 3. Tambahkan layanan MudBlazor
-builder.Services.AddMudServices();
+// 2. Registrasi Repository
+builder.Services.AddHttpClient<ScrapingService>(); // Hapus 's' jika di class-nya tunggal
+builder.Services.AddScoped<TrendRepo>();
+builder.Services.AddScoped<TrendAnalyzer>();       // Sesuai Gambar 5.2 
+builder.Services.AddScoped<Report>();              // Sesuai Gambar 5.2 
+builder.Services.AddScoped<Trend.MudWeb.Services.Notifications>();
+
+// Tambahkan layanan MudBlazor
+builder.Services.AddMudServices(config => {
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopRight;
+    config.SnackbarConfiguration.VisibleStateDuration = 5000;
+});
+
+// 4. Registrasi Konfigurasi API (dari appsettings.json)
+builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
+
+// -----------------------------------------------------------
+
+
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Tambahkan di Program.cs
+// Konfigurasi Autentikasi & Otorisasi
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
         options.Cookie.Name = "Trendz_Auth";
-        options.LoginPath = "/login"; // Halaman jika belum login
-        options.AccessDeniedPath = "/access-denied"; // Halaman jika user Free buka fitur Premium
+        options.LoginPath = "/login";
+        options.AccessDeniedPath = "/access-denied";
     });
 
-builder.Services.AddCascadingAuthenticationState(); // Penting untuk Blazor
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddScoped<CustomAuthStateProvider>(sp =>
+    (CustomAuthStateProvider)sp.GetRequiredService<AuthenticationStateProvider>());
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("PremiumOnly", policy => policy.RequireClaim("SubscriptionStatus", "Premium"));

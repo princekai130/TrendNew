@@ -2,11 +2,13 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Trend.MudWeb.Models;
 
-public partial class Notification
+public partial class Notifications
 {
+    [Key] // Tambahkan ini untuk memberitahu EF Core bahwa ini adalah Primary Key
     public int NotificationId { get; set; }
 
     public int? UserId { get; set; }

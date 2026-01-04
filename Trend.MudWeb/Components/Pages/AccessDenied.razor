@@ -1,0 +1,25 @@
+﻿@page "/access-denied"
+
+<PageTitle>Akses Ditolak - Trendz</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16 text-center">
+    <MudPaper Elevation="0" Class="pa-12 rounded-xl" Style="background-color: var(--mud-palette-background-grey);">
+        <MudIcon Icon="@Icons.Material.Filled.LockPerson" Color="Color.Error" Size="Size.Large" Style="font-size: 5rem;" />
+        
+        <MudText Typo="Typo.h4" Class="fw-bold mt-6">Ups! Fitur Ini Terkunci</MudText>
+        
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-4 mb-8">
+            Halaman yang Anda tuju merupakan bagian dari paket <b>Premium Strategist</b>. 
+            Dapatkan akses penuh ke analisis kompetitor dan resep konten viral dengan upgrade akun Anda.
+        </MudText>
+
+        <MudStack Row="true" Justify="Justify.Center" Spacing="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Href="/UpgradePremium">
+                Lihat Paket Premium
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" Href="/dashboard">
+                Kembali ke Dashboard
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>

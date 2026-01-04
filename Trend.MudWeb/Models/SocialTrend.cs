@@ -26,4 +26,7 @@ public partial class SocialTrend
     public virtual ICollection<ContentRecommendation> ContentRecommendations { get; set; } = new List<ContentRecommendation>();
 
     public virtual Nich Niche { get; set; }
+
+    public double GrowthScoreValue => Convert.ToDouble(GrowthScore);
+
 }

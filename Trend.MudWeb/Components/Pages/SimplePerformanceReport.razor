@@ -1,9 +1,86 @@
 ﻿@page "/SimplePerformanceReport"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Trend.MudWeb.Models
+@inject TrendRepo Repo
+@inject AuthenticationStateProvider AuthProvider
 
+<PageTitle>Simple Performance Report</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4" AlignItems="AlignItems.Center">
+        <MudIcon Icon="@Icons.Material.Filled.AutoGraph" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h3">Performance Report</MudText>
+    </MudStack>
 
-<PageTitle>Simple Performance Report (Premium)</PageTitle>
+    <MudText Typo="Typo.body1" Class="mb-8">
+        Visualisasi metrik performa akun Anda yang bersih dan sederhana, menghindari data mentah yang rumit.
+    </MudText>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Simple Performance Report</MudText>
-<MudText Typo="Typo.body1" Class="mb-8">Visualisasi sederhana dan mudah dipahami dari metrik performa akun talent sendiri (jika sudah terintegrasi API)</MudText>
-<MudText Typo="Typo.body2" Class="mb-8">Visualisasi: Grafik batang/donat yang bersih, menghindari tabel data mentah yang rumit.</MudText>
+    <AuthorizeView Context="authContext">
+        <Authorized>
+            <MudGrid>
+                @* Ringkasan Engagement - Berdasarkan Preferensi Visual Sederhana  *@
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="3">
+                        <MudText Typo="Typo.h6" Class="mb-4">Distribusi Engagement</MudText>
+                        <MudChart ChartType="ChartType.Donut"
+                                  Width="300px"
+                                  Height="300px"
+                                  InputData="@_engagementData"
+                                  InputLabels="@_engagementLabels">
+                            <CustomGraphics>
+                                <text class="donut-inner-text" x="47%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Helvetica" font-size="2">Total</text>
+                                <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Helvetica" font-size="5">@_totalEngagement.ToString("N0")</text>
+                            </CustomGraphics>
+                        </MudChart>
+                    </MudPaper>
+                </MudItem>
+
+                @* Grafik Pertumbuhan Mingguan - Solusi untuk Pantau Tren Manual  *@
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="3">
+                        <MudText Typo="Typo.h6" Class="mb-4">Pertumbuhan Viewer (7 Hari Terakhir)</MudText>
+                        <MudChart ChartType="ChartType.Bar"
+                                  ChartSeries="@_series"
+                                  XAxisLabels="@_xAxisLabels"
+                                  Width="100%"
+                                  Height="300px" />
+                    </MudPaper>
+                </MudItem>
+
+                @* Insight Utama - Memenuhi Target 92,6% Ingin Tahu Konten Layak Boost  *@
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.RocketLaunch" Class="mt-4">
+                        <MudText Typo="Typo.body1">
+                            <b>Rekomendasi Strategis:</b> Konten terakhir Anda memiliki performa 25% di atas rata-rata.
+                            Sistem menyarankan untuk melakukan <b>Boost Ulang</b> hari ini[cite: 7, 49].
+                        </MudText>
+                    </MudAlert>
+                </MudItem>
+            </MudGrid>
+        </Authorized>
+        <NotAuthorized>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mt-4">
+                Silakan login untuk melihat laporan performa akun Anda.
+            </MudAlert>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudContainer>
+
+@code {
+    // Data Dummy untuk Chart sesuai interpretasi visual sederhana
+    private double[] _engagementData = { 50, 25, 20, 5 };
+    private string[] _engagementLabels = { "Likes", "Shares", "Comments", "Saves" };
+    private double _totalEngagement = 15420;
+
+    private List<ChartSeries> _series = new List<ChartSeries>()
+    {
+        new ChartSeries()
+        {
+            Name = "Views",
+            // Perbaikan: Inisialisasi eksplisit sebagai array double
+            Data = new double[] { 1200, 2100, 1800, 3500, 2800, 4200, 5100 }
+        }
+    };
+    private string[] _xAxisLabels = { "Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min" };
+}

@@ -1,90 +1,331 @@
 ﻿@page "/dashboard"
-@using Microsoft.AspNetCore.Components.Authorization
 @using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ScrapingService Scraper
+@inject TrendAnalyzer Analyzer
+@inject Report ReportService
 @inject TrendRepo Repo
-@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
-    <AuthorizeView Context="authContext">
-        <Authorized>
-            @* Sapaan User berdasarkan data otentikasi *@
-            <MudText Typo="Typo.h4">Halo, @authContext.User.Identity.Name!</MudText>
-            <MudText Class="mb-8">Berikut adalah ringkasan tren sosial media untuk Anda.</MudText>
+<PageTitle>Dashboard - Trendz Market Pulse</PageTitle>
 
-            <MudGrid>
-                @* FITUR GRATIS: Dapat diakses oleh 92,6% responden yang bersedia mencoba versi gratis  *@
-                <MudItem xs="12" md="6">
-                    <MudPaper Class="pa-4" Elevation="3">
-                        <MudText Typo="Typo.h6" Class="mb-4">🔥 Tren Viral (TikTok & Instagram)</MudText>
-                        @if (_viralTrends == null)
-                        {
-                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
-                        }
-                        else
-                        {
-                            @foreach (var trend in _viralTrends)
-                            {
-                                <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mt-2">
-                                    @trend.TrendName (@trend.Platform)
-                                </MudAlert>
-                            }
-                        }
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    @* --- HEADER DASHBOARD DENGAN TOMBOL REFRESH --- *@
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
+        <MudStack>
+            <MudText Typo="Typo.h3" Class="fw-bold">
+                Market Pulse 🚀
+                @if (_isSyncing)
+                {
+                    <MudProgressCircular Color="Color.Info" Size="Size.Small" Indeterminate="true" Class="ml-2" />
+                }
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Insight tren real-time berbasis AI untuk creator & brand.
+            </MudText>
+        </MudStack>
+
+        <MudButton OnClick="@(() => Snackbar.Add("Tes Snackbar Berhasil!", Severity.Success))">
+            Tes Notifikasi
+        </MudButton>
+        <MudButton OnClick="TestSnackbar">
+            Tes Notifikasi
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="RefreshTrends"
+                   @* TAMBAHKAN ATAU PERBARUI DI SINI *@
+                   Disabled="@(_isLoading || _isSyncing)"
+                   Class="rounded-pill px-6">
+            @if (_isSyncing)
+            {
+                <span>Menghubungkan API...</span>
+            }
+            else
+            {
+                <span>@(_isLoading ? "Memuat Data..." : "Refresh Data")</span>
+            }
+        </MudButton>
+    </MudStack>
+
+
+    @if (_isLoading)
+    {
+        <MudStack AlignItems="AlignItems.Center" Class="pa-12">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.body1">Menghubungkan ke Apify & Menganalisis Tren TikTok...</MudText>
+        </MudStack>
+    }
+    else
+    {
+        <MudGrid Class="mb-10">
+            @foreach (var item in _trends.Take(6))
+            {
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="2" Class="trend-card">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                                @item.TrendName
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Platform: @item.Platform
+                            </MudText>
+
+                            <MudProgressLinear Value="@(Math.Min(100, Convert.ToDouble(item.GrowthScore)))" />
+
+                            <MudText Typo="Typo.caption" Align="Align.Right">
+                                Growth Score: <b>@item.GrowthScore%</b>
+                            </MudText>
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
+            }
+        </MudGrid>
 
-                @* FITUR PREMIUM: Ditujukan untuk monetisasi fitur Insight Kompetitor (diminati 85,2% responden)  *@
-                <MudItem xs="12" md="6">
-                    @* Perbaikan: Menggunakan Context="premiumContext" untuk menghindari error RZ9999 *@
-                    <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
-                        <Authorized>
-                            <MudPaper Class="pa-4" Style="border: 2px solid var(--mud-palette-primary); height: 100%;">
-                                <MudStack Row="true" Justify="Justify.SpaceBetween">
-                                    <MudText Typo="Typo.h6">📊 Analisis Kompetitor</MudText>
-                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small">PREMIUM</MudChip>
-                                </MudStack>
-                                <MudText Class="mt-4">Data performa kompetitor sedang dianalisis secara otomatis.</MudText>
-                                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-auto">Lihat Laporan Lengkap</MudButton>
-                            </MudPaper>
-                        </Authorized>
-                        <NotAuthorized>
-                            @* Strategi upselling untuk 81,5% yang merasa belum ada platform serupa  *@
-                            <MudPaper Class="pa-4" Style="background-color: var(--mud-palette-background-grey); height: 100%;">
-                                <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Warning" />
-                                    <MudText Typo="Typo.h6">Fitur Terkunci</MudText>
-                                    <MudText Typo="Typo.body2" Align="Align.Center">
-                                        Ingin tahu performa kompetitor? 85,2% kreator menggunakan fitur ini untuk tetap unggul.
-                                    </MudText>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Upgrade ke Premium</MudButton>
-                                </MudStack>
-                            </MudPaper>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                </MudItem>
-            </MudGrid>
-        </Authorized>
 
-        <NotAuthorized>
-            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-4">
-                Anda harus login untuk melihat dashboard TRENDZ.
-            </MudAlert>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Href="/login">
-                Ke Halaman Login
-            </MudButton>
-        </NotAuthorized>
-    </AuthorizeView>
+        <MudGrid>
+            @* 1. Status Utama (Hasil TrendAnalyzer.AnalyzeTrend) *@
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-8 rounded-xl ai-insight-card" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="mb-2 fw-bold">
+                        AI Market Insight 🤖
+                    </MudText>
+
+                    @if (_topTrend != null)
+                    {
+                        <MudStack Spacing="3">
+                            <MudStack Direction="Row" AlignItems="AlignItems.End">
+                                <MudText Typo="Typo.h2" Color="Color.Primary" Class="fw-bold">
+                                    @_topTrend.GrowthScore%
+                                </MudText>
+                                <MudText Typo="Typo.subtitle1" Class="ml-3">
+                                    @_topTrend.TrendName
+                                </MudText>
+                            </MudStack>
+
+                            <MudAlert Severity="Severity.Success"
+                                      Variant="Variant.Outlined"
+                                      Icon="@Icons.Material.Filled.AutoFixHigh">
+                                @_analysisResult
+                            </MudAlert>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="160px" />
+                    }
+                </MudPaper>
+
+            </MudItem>
+
+            @* 2. Quick Report Stats *@
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-6 rounded-xl" Elevation="2">
+                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-4">
+                        Latest Report 📄
+                    </MudText>
+
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.caption">
+                            Report ID
+                        </MudText>
+                        <MudText Typo="Typo.body1" Class="fw-bold">
+                            #@ReportService.reportId
+                        </MudText>
+
+                        <MudDivider />
+
+                        <MudText Typo="Typo.caption">
+                            Generated At
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            @ReportService.generatedAt.ToString("HH:mm")
+                        </MudText>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   FullWidth
+                                   Class="mt-2"
+                                   Href="/MarketReport">
+                            View Full Report
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+
+            </MudItem>
+
+            @* 3. Competitor Snapshot *@
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mt-10 mb-4 fw-bold">
+                    Intelligence Monitoring 🧠
+                </MudText>
+
+                <MudGrid>
+                    @foreach (var comp in _competitorAlerts)
+                    {
+                        <MudItem xs="12" md="4">
+                            <MudPaper Class="pa-5 rounded-lg competitor-card" Elevation="2">
+                                <MudText Typo="Typo.subtitle2" Class="fw-bold">
+                                    @@comp.Username
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @comp.Platform
+                                </MudText>
+
+                                <MudDivider Class="my-2" />
+
+                                <MudText Typo="Typo.body2">
+                                    "@Analyzer.AnalyzeCompetitor(comp)"
+                                </MudText>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+
+            </MudItem>
+        </MudGrid>
+    }
 </MudContainer>
 
 @code {
-    private List<SocialTrend> _viralTrends;
+    private bool _isSyncing = false;
+    private bool _isLoading = true;
+    private List<SocialTrend> _trends = new();
+    private SocialTrend _topTrend;
+    private string _analysisResult;
+    private List<CompetitorData> _competitorAlerts = new();
+
+    private const int ScrapeIntervalHours = 24;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity.IsAuthenticated)
+        // Jangan panggil LoadDashboardData dengan 'await' agar UI tidak terkunci total jika ada background task
+        await LoadDashboardData();
+    }
+
+    private void TestSnackbar()
+    {
+        Snackbar.Add("Tes Snackbar Berhasil!", Severity.Success);
+    }
+
+    private async Task LoadDashboardData()
+    {
+        _isLoading = true;
+
+        // 1. Ambil data dari DB (Cepat)
+        _trends = await Repo.GetTrendsAsync();
+
+        if (_trends.Any())
         {
-            // Memenuhi kebutuhan automasi tanpa manual harian
-            _viralTrends = await Repo.GetViralTrendsAsync();
+            await ProcessDataForUI();
+            _isLoading = false;
+            StateHasChanged();
+        }
+
+        // 2. Cek apakah perlu ambil data baru (Stale Check)
+        var lastTrend = _trends.OrderByDescending(t => t.DiscoveredAt).FirstOrDefault();
+        bool isDataStale = lastTrend == null ||
+                          (DateTime.Now - lastTrend.DiscoveredAt).Value.TotalHours >= ScrapeIntervalHours;
+
+        _competitorAlerts = new List<CompetitorData>
+        {
+            new CompetitorData { Username = "beauty_enthusiast", Platform = "Instagram" },
+            new CompetitorData { Username = "skin_expert", Platform = "TikTok" }
+        };
+
+        if (isDataStale)
+        {
+            // Menjalankan di thread terpisah agar halaman tidak lag saat loading awal
+            _ = Task.Run(async () => await ExecuteScrapingFlow());
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task RefreshTrends()
+    {
+        if (_isSyncing) return;
+
+        var lastTrend = _trends.OrderByDescending(t => t.DiscoveredAt).FirstOrDefault();
+
+        if (lastTrend != null)
+        {
+            var timePassed = DateTime.Now - lastTrend.DiscoveredAt;
+            double hoursPassed = timePassed.Value.TotalHours;
+
+            if (hoursPassed < ScrapeIntervalHours)
+            {
+                var remaining = (int)Math.Ceiling(ScrapeIntervalHours - hoursPassed);
+                // Notifikasi ini akan langsung muncul karena dipanggil dari UI thread
+                Snackbar.Add($"Data masih baru. Refresh manual tersedia dalam {remaining} jam lagi.", Severity.Info);
+                return;
+            }
+        }
+
+        Snackbar.Add("Memulai penarikan data terbaru dari TikTok...", Severity.Info);
+
+        // Panggil langsung tanpa Task.Run karena ini aksi user (ingin menunggu feedback)
+        await ExecuteScrapingFlow();
+    }
+
+    private async Task ExecuteScrapingFlow()
+    {
+        // Pastikan perubahan state UI dilakukan melalui InvokeAsync jika dipanggil dari Task.Run
+        await InvokeAsync(() =>
+        {
+            _isSyncing = true;
+            StateHasChanged();
+        });
+
+        try
+        {
+            var freshData = await Scraper.FetchTrendData();
+            if (freshData != null && freshData.Any())
+            {
+                await Repo.SaveTrendRangeAsync(freshData);
+                _trends = await Repo.GetTrendsAsync();
+                await ProcessDataForUI();
+
+                // PENTING: Gunakan Action di dalam Add untuk thread safety
+                await InvokeAsync(() =>
+                {
+                    Snackbar.Add("Data berhasil diperbarui dari API!", Severity.Success);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            var detailedError = ex.Message;
+            if (ex.InnerException != null) detailedError += " -> " + ex.InnerException.Message;
+
+            await InvokeAsync(() =>
+            {
+                Snackbar.Add($"Gagal Sinkronisasi: {detailedError}", Severity.Error);
+            });
+        }
+        finally
+        {
+            await InvokeAsync(() =>
+            {
+                _isSyncing = false;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task ProcessDataForUI()
+    {
+        if (_trends.Any())
+        {
+            _topTrend = _trends.First();
+            var analysisInput = new TrendData { Keyword = _topTrend.TrendName, Platform = _topTrend.Platform };
+            _analysisResult = Analyzer.AnalyzeTrend(analysisInput);
+            ReportService.GenerateReport(_analysisResult);
         }
     }
 }

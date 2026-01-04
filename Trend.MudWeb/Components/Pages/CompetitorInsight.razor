@@ -1,9 +1,136 @@
 ﻿@page "/CompetitorInsight"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Trend.MudWeb.Models
+@inject ISnackbar Snackbar
 
+<PageTitle>Competitor Insight</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4" AlignItems="AlignItems.Center">
+        <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h3">Competitor Insight</MudText>
+    </MudStack>
 
-<PageTitle>Competitor Insight (Premium)</PageTitle>
+    <MudText Typo="Typo.body1" Class="mb-8">
+        Pantau konten dengan performa terbaik dari kompetitor Anda dalam 24 jam terakhir. Pelajari strategi mereka untuk meningkatkan engagement Anda sendiri.
+    </MudText>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Competitor Insight</MudText>
-<MudText Typo="Typo.body1" Class="mb-8">Menampilkan konten kompetitor dengan performa terbaik (engagement tertinggi) selama 24 jam terakhir. Dilengkapi detail metrik (Likes, Comment, Share).</MudText>
-<MudText Typo="Typo.body2" Class="mb-8">Visualisasi: Kartu konten kecil (mirip feed) dengan statistik kunci di bawahnya. Ada tombol "Track This" untuk memantau performa.</MudText>
+    <AuthorizeView Policy="PremiumOnly" Context="premium">
+        <Authorized>
+            <MudGrid>
+                @if (_competitorPosts == null)
+                {
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
+                            <MudSkeleton Class="mt-2" Width="60%" />
+                            <MudSkeleton Width="40%" />
+                        </MudItem>
+                    }
+                }
+                else
+                {
+                    @foreach (var post in _competitorPosts)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="4" Class="rounded-lg">
+                                <MudCardHeader>
+                                    <CardHeaderAvatar>
+                                        <MudAvatar Color="Color.Info" Variant="Variant.Filled">@post.Username[0]</MudAvatar>
+                                    </CardHeaderAvatar>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.body1"><b>@@@post.Username</b></MudText>
+                                        <MudText Typo="Typo.caption">@post.Platform • 24 jam terakhir</MudText>
+                                    </CardHeaderContent>
+                                    <CardHeaderActions>
+                                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Color="Color.Default" />
+                                    </CardHeaderActions>
+                                </MudCardHeader>
+
+                                <MudCardContent>
+                                    <MudText Typo="Typo.body2" Class="mb-4" Style="height: 40px; overflow: hidden;">
+                                        @post.Caption
+                                    </MudText>
+
+                                    <MudDivider Class="mb-4" />
+
+                                    <MudStack Row="true" Justify="Justify.SpaceAround">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                            <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" Size="Size.Small" />
+                                            <MudText Typo="Typo.caption">@post.Likes.ToString("N0")</MudText>
+                                        </MudStack>
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                            <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Color="Color.Info" Size="Size.Small" />
+                                            <MudText Typo="Typo.caption">@post.Comments.ToString("N0")</MudText>
+                                        </MudStack>
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                            <MudIcon Icon="@Icons.Material.Filled.Share" Color="Color.Success" Size="Size.Small" />
+                                            <MudText Typo="Typo.caption">@post.Shares.ToString("N0")</MudText>
+                                        </MudStack>
+                                    </MudStack>
+                                </MudCardContent>
+
+                                <MudCardActions>
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Primary"
+                                               FullWidth="true"
+                                               StartIcon="@Icons.Material.Filled.AddModerator"
+                                               OnClick="@(() => TrackPost(post.Username))">
+                                        Track This Creator
+                                    </MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </Authorized>
+
+        <NotAuthorized>
+            <MudPaper Class="pa-12 d-flex flex-column align-center justify-center" Style="background-color: var(--mud-palette-background-gray); border: 2px dashed var(--mud-palette-divider);">
+                <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Warning" Class="mb-4" />
+                <MudText Typo="Typo.h5" GutterBottom="true">Fitur Khusus Premium</MudText>
+                <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-6">
+                    85% Strategist menggunakan fitur ini untuk memantau kompetitor secara otomatis.<br />
+                    Jangan biarkan kompetitor mencuri momentum Anda.
+                </MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Href="/pricing">
+                    Upgrade Sekarang
+                </MudButton>
+            </MudPaper>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudContainer>
+
+@code {
+    private List<CompetitorPost> _competitorPosts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulasi pengambilan data dari sistem scraping
+        await Task.Delay(1500);
+
+        _competitorPosts = new List<CompetitorPost>
+        {
+            new CompetitorPost { Username = "beauty_guru", Platform = "Instagram", Caption = "Tutorial makeup natural 5 menit untuk kerja! ✨", Likes = 15400, Comments = 890, Shares = 2100 },
+            new CompetitorPost { Username = "tech_reviewer", Platform = "TikTok", Caption = "Unboxing HP 2 jutaan paling kencang di 2024! 📱", Likes = 45000, Comments = 1200, Shares = 5600 },
+            new CompetitorPost { Username = "healthy_eats", Platform = "Instagram", Caption = "Resep smoothie bowl anti laper seharian! 🍓", Likes = 8200, Comments = 450, Shares = 1200 }
+        };
+    }
+
+    private void TrackPost(string username)
+    {
+        Snackbar.Add($"Mulai memantau @{username}. Anda akan mendapat notifikasi saat mereka posting!", Severity.Info);
+    }
+
+    public class CompetitorPost
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Platform { get; set; } = string.Empty;
+        public string Caption { get; set; } = string.Empty;
+        public int Likes { get; set; }
+        public int Comments { get; set; }
+        public int Shares { get; set; }
+    }
+}

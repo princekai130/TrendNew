@@ -1,33 +1,77 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    
+﻿<MudNavMenu Class="trendz-nav">
     <AuthorizeView>
         <Authorized>
-            <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-            <MudNavLink Href="TrendAlert" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.NotificationsActive">Trend Alert</MudNavLink>
-            <MudNavLink Href="TrendExploler" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Search">Trend Explorer</MudNavLink>
-            
-            <MudNavGroup Title="Analytics" Icon="@Icons.Material.Filled.BarChart" Expanded="true">
-                <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
-                    <Authorized>
-                        <MudNavLink Href="CompetitorInsight" Icon="@Icons.Material.Filled.Groups">Competitor Insight</MudNavLink>
-                        <MudNavLink Href="ContentBoostPotential" Icon="@Icons.Material.Filled.RocketLaunch">Content Boost</MudNavLink>
-                    </Authorized>
-                    <NotAuthorized>
-                        @* Menampilkan menu terkunci untuk mendorong konversi premium *@
-                        <MudNavLink Disabled="true" Icon="@Icons.Material.Filled.Lock">Competitor (Premium)</MudNavLink>
-                    </NotAuthorized>
-                </AuthorizeView>
-                <MudNavLink Href="SimplePerformanceReport" Icon="@Icons.Material.Filled.AutoGraph">Performance Report</MudNavLink>
-            </MudNavGroup>
 
-            @* Fitur Logout *@
-            <MudDivider Class="my-2" />
+            <!-- UTAMA -->
+            <MudText Typo="Typo.caption" Class="nav-section-title">
+                UTAMA
+            </MudText>
+
+            <MudNavLink Href="dashboard"
+                        Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.Dashboard"
+                        Class="nav-item">
+                Dashboard
+            </MudNavLink>
+
+            <MudNavLink Href="trendexplorer"
+                        Icon="@Icons.Material.Filled.Explore"
+                        Class="nav-item">
+                Trend Explorer
+            </MudNavLink>
+
+            <MudNavLink Href="Notifications"
+                        Icon="@Icons.Material.Filled.Notifications"
+                        Class="nav-item">
+                Notifikasi
+
+                @if (_unreadCount > 0)
+                {
+                    <MudBadge Content="@_unreadCount" Color="Color.Error" Overlap="true" Class="ml-auto" />
+                }
+            </MudNavLink>
+
+            @code {
+                private int _unreadCount = 0;
+                // Anda bisa memanggil Repo.GetUnreadCount(userId) di sini jika ingin real-time
+            }
+
+            <!-- PREMIUM -->
+            <AuthorizeView Policy="PremiumOnly">
+                <Authorized Context="premiumContext">
+                    <MudDivider Class="my-3 opacity-50" />
+
+                    <MudText Typo="Typo.caption" Class="nav-section-title">
+                        <span>STRATEGIST TOOLS</span>
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="Color.Primary"
+                                 Variant="Variant.Filled"
+                                 Class="ml-auto pro-chip">
+                            PRO
+                        </MudChip>
+                    </MudText>
+
+                    <MudNavLink Href="TheHotList"
+                                Icon="@Icons.Material.Filled.Whatshot"
+                                Class="nav-item premium-item">
+                        The Hot List
+                    </MudNavLink>
+
+                    <MudNavLink Href="CompetitorWatchlist"
+                                Icon="@Icons.Material.Filled.Groups"
+                                Class="nav-item premium-item">
+                        Competitor Watchlist
+                    </MudNavLink>
+
+                    <MudNavLink Href="MarketReport"
+                                Icon="@Icons.Material.Filled.BarChart"
+                                Class="nav-item premium-item">
+                        Market Report
+                    </MudNavLink>
+                </Authorized>
+            </AuthorizeView>
+
         </Authorized>
-        <NotAuthorized>
-            <MudNavLink Href="login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
-            <MudNavLink Href="register" Icon="@Icons.Material.Filled.AppRegistration">Register</MudNavLink>
-        </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>

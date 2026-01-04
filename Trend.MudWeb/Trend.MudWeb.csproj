@@ -9,6 +9,11 @@
   <ItemGroup>
     <Content Remove="Components\Layout\Hello.razor" />
     <Content Remove="Components\Layout\World.razor" />
+    <Content Remove="Components\Pages\CompetitorInsight.razor" />
+    <Content Remove="Components\Pages\ContentBoostPotential.razor" />
+    <Content Remove="Components\Pages\MyNicheStatus.razor" />
+    <Content Remove="Components\Pages\SimplePerformanceReport.razor" />
+    <Content Remove="Components\Pages\TrendAlert.razor" />
   </ItemGroup>
 
 
@@ -20,6 +25,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="MudBlazor" Version="8.*" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 

@@ -106,7 +106,7 @@ namespace Trend.MudWeb
         /// </summary>
         /// <param name="userId">ID pengguna target</param>
         /// <returns>Daftar notifikasi terbaru</returns>
-        public async Task<List<Notification>> GetUserNotificationsAsync(int userId)
+        public async Task<List<Notifications>> GetUserNotificationsAsync(int userId)
         {
             return await _context.Notifications
                 .Where(n => n.UserId == userId && n.IsRead == false)
@@ -140,6 +140,157 @@ namespace Trend.MudWeb
         public async Task<List<Nich>> GetAllNichesAsync()
         {
             return await _context.Niches.OrderBy(n => n.NicheName).ToListAsync();
+        }
+
+        #endregion
+
+        #region Simpan & Ambil Daftar Trend
+        public async Task<List<SocialTrend>> GetTrendsAsync()
+        {
+            return await _context.SocialTrends.ToListAsync();
+        }
+
+        public async Task SaveTrendRangeAsync(List<TrendData> trends)
+        {
+            try
+            {
+                foreach (var item in trends)
+                {
+                    // Gunakan ToLower() untuk perbandingan yang lebih aman
+                    var exists = await _context.SocialTrends
+                        .AnyAsync(t => t.TrendName.ToLower() == item.Keyword.ToLower()
+                                  && t.Platform == item.Platform);
+                    if (!exists)
+                    {
+                        var newTrend = new SocialTrend
+                        {
+                            TrendName = item.Keyword.Length > 200 ? item.Keyword.Substring(0, 197) + "..." : item.Keyword,
+                            Platform = item.Platform,
+                            GrowthScore = Convert.ToDouble(item.EngagementScore),
+                            DiscoveredAt = DateTime.Now,
+                            IsViral = item.EngagementScore > 80,
+
+                            // UBAH BARIS INI: Harus sesuai dengan CHECK constraint database
+                            TrendType = "Hashtag"
+                        };
+                        _context.SocialTrends.Add(newTrend);
+                    }
+                }
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Ini akan menangkap detail error database yang sebenarnya
+                var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                throw new Exception($"Database Error: {innerMessage}");
+            }
+        }
+
+        // Tambahkan juga metode pencarian untuk Trend Explorer
+        public async Task<List<SocialTrend>> SearchTrendsAsync(string searchTerm)
+        {
+            // Menggunakan queryable agar eksekusi terjadi di database
+            var query = _context.SocialTrends.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                string search = searchTerm.ToLower();
+                query = query.Where(t =>
+                    (t.TrendName != null && t.TrendName.ToLower().Contains(search)) ||
+                    (t.Platform != null && t.Platform.ToLower().Contains(search)));
+            }
+
+            return await query.OrderByDescending(t => t.DiscoveredAt).ToListAsync();
+        }
+
+        public async Task AddNotificationAsync(int userId, string title, string message)
+        {
+            var notification = new Notifications
+            {
+                UserId = userId,
+                // Kita gabungkan Title ke dalam Message karena kolom Title tidak ada di DB
+                Message = $"[{title}] {message}",
+                CreatedAt = DateTime.Now,
+                IsRead = false
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
+
+        #endregion
+
+        #region Upgrade User Subscription
+
+        public async Task UpdateUserSubscriptionAsync(string email, string newStatus)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null)
+            {
+                user.SubscriptionStatus = newStatus;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        #endregion
+
+        #region Competitor Watchlist Logic
+
+        // Mengambil daftar kompetitor yang dipantau oleh user
+        public async Task<List<Competitor>> GetUserCompetitorsAsync(int userId)
+        {
+            return await _context.Competitors
+                .Where(c => c.UserId == userId)
+                .ToListAsync();
+        }
+
+        // Mengambil postingan dari kompetitor tertentu dengan engagement tertinggi
+        public async Task<List<CompetitorPost>> GetCompetitorPostsAsync(int userId)
+        {
+            return await _context.CompetitorPosts
+                .Include(p => p.Competitor) // Penting agar data Platform & AccountHandle terbaca
+                .Where(p => p.Competitor.UserId == userId)
+                .OrderByDescending(p => p.EngagementRate)
+                .ToListAsync();
+        }
+
+        // Method untuk menambah kompetitor baru (untuk didemokan)
+        public async Task AddCompetitorAsync(Competitor comp)
+        {
+            _context.Competitors.Add(comp);
+            await _context.SaveChangesAsync();
+        }
+
+        #endregion
+
+        #region The Hot List
+
+        public async Task<List<SocialTrend>> GetHotListTrendsAsync()
+        {
+            // Mengambil tren yang IsViral true ATAU GrowthScore di atas 80
+            return await _context.SocialTrends
+                .Where(t => t.IsViral == true || t.GrowthScore > 80)
+                .OrderByDescending(t => t.GrowthScore)
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Market Report
+
+        public async Task<Dictionary<string, int>> GetMarketReportStatsAsync()
+        {
+            var totalTrends = await _context.SocialTrends.CountAsync();
+            var viralTrends = await _context.SocialTrends.CountAsync(t => t.IsViral == true);
+            var tiktokCount = await _context.SocialTrends.CountAsync(t => t.Platform == "TikTok");
+            var igCount = await _context.SocialTrends.CountAsync(t => t.Platform == "Instagram");
+
+            return new Dictionary<string, int>
+    {
+        { "Total", totalTrends },
+        { "Viral", viralTrends },
+        { "TikTok", tiktokCount },
+        { "Instagram", igCount }
+    };
         }
 
         #endregion

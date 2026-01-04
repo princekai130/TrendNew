@@ -1,9 +1,65 @@
 ﻿@page "/TheHotList"
+@using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@inject TrendRepo Repo
+@attribute [Authorize(Policy = "PremiumOnly")]
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error" Size="Size.Large" />
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">The Hot List</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Tren dengan pertumbuhan tercepat dalam 24 jam terakhir.</MudText>
+        </div>
+    </MudStack>
 
+    @if (_hotTrends == null)
+    {
+        <MudProgressLinear Color="Color.Error" Indeterminate="true" />
+    }
+    else if (!_hotTrends.Any())
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="rounded-lg">
+            Belum ada tren yang mencapai kategori "Hot" hari ini. Coba segarkan data melalui Dashboard.
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var trend in _hotTrends)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudPaper Class="pa-4 rounded-xl relative" Elevation="4" Style="border: 1px solid var(--mud-palette-error);">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudChip T="string" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.Filled.TrendingUp">
+                                @trend.GrowthScore% Growth
+                            </MudChip>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@trend.Platform</MudText>
+                        </div>
 
-<PageTitle>The Hot List (Premium)</PageTitle>
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-2">@trend.TrendName</MudText>
 
-<MudText Typo="Typo.h3" GutterBottom="true">The Hot List</MudText>
-<MudText Typo="Typo.body1" Class="mb-8">Rekomendasi Ide Konten Otomatis. Saran hook, call-to-action, atau skrip yang dapat digunakan, didasarkan pada model machine learning sederhana.</MudText>
-<MudText Typo="Typo.body2" Class="mb-8">Visualisasi: Tombol "Generate Idea" yang menonjol. Setiap ide memiliki tag platform (TikTok/IG) dan tingkat relevansi dengan niche.</MudText>`
+                        <MudStack Row="true" Spacing="1" Class="mb-4">
+                            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Error" Size="Size.Small" />
+                            <MudText Typo="Typo.caption">Sangat Viral</MudText>
+                        </MudStack>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" StartIcon="@Icons.Material.Filled.AutoFixHigh">
+                            Generate Ide Konten
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<SocialTrend>? _hotTrends;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hotTrends = await Repo.GetHotListTrendsAsync();
+    }
+}

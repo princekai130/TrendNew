@@ -1,0 +1,102 @@
+﻿@page "/CompetitorWatchlist"
+@using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "PremiumOnly")]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Competitor Watchlist</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Pantau strategi konten dan performa kompetitor Anda secara real-time.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddCompetitor">
+            Tambah Kompetitor
+        </MudButton>
+    </MudStack>
+
+    <MudGrid>
+        @if (_posts == null)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            </MudItem>
+        }
+        else if (!_posts.Any())
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info">Belum ada kompetitor yang dipantau. Mulai tambahkan akun kompetitor untuk melihat analisis konten mereka.</MudAlert>
+            </MudItem>
+        }
+        else
+        {
+            @foreach (var post in _posts)
+            {
+                <MudItem xs="12" md="4">
+                    <MudCard Elevation="3" Class="rounded-lg h-100">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Secondary">@(post.Competitor?.AccountHandle?[0].ToString().ToUpper() ?? "?")</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.body1">@post.Competitor?.AccountHandle</MudText>
+                                <MudText Typo="Typo.caption">@post.Competitor?.Platform</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="Typo.body2" Class="mb-4">Link: @post.PostUrl</MudText>
+                            <MudDivider Class="my-2" />
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.caption">Engagement Rate</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Primary" Class="fw-bold">@post.EngagementRate%</MudText>
+                            </MudStack>
+                            <MudProgressLinear Color="Color.Primary" Value="@(Convert.ToDouble(post.EngagementRate ?? 0))" Class="mt-1" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Mendeklarasikan variabel agar tidak error CS0103
+    private List<CompetitorPost>? _posts;
+    private int _currentUserId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Memanggil data dari repo
+        _posts = await Repo.GetCompetitorPostsAsync(_currentUserId);
+    }
+
+    private async Task AddCompetitor()
+    {
+        try
+        {
+            var newComp = new Competitor
+            {
+                UserId = _currentUserId,
+                AccountHandle = "@kreator_pesaing_" + Random.Shared.Next(100, 999),
+                Platform = "TikTok"
+            };
+
+            await Repo.AddCompetitorAsync(newComp);
+            Snackbar.Add("Kompetitor berhasil ditambahkan!", Severity.Success);
+
+            // Refresh data setelah menambah
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal menambah data: " + ex.Message, Severity.Error);
+        }
+    }
+}

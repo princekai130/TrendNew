@@ -1,0 +1,127 @@
+﻿@page "/trendexplorer"
+@using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudStack Class="mb-6">
+        <MudText Typo="Typo.h3" Class="fw-bold">
+            Trend Explorer 🔎
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Jelajahi tren yang sedang naik berdasarkan data real-time & analisis sistem.
+        </MudText>
+    </MudStack>
+
+
+    <MudPaper Elevation="2" Class="pa-5 mb-8 rounded-xl">
+        <MudGrid Spacing="3" AlignItems="AlignItems.Center">
+            <MudItem xs="12" md="9">
+                <MudTextField @bind-Value="_searchTerm"
+                              Placeholder="Cari tren, platform, atau keyword…"
+                              Variant="Variant.Outlined"
+                              FullWidth
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth
+                           Disabled="_isSearching"
+                           OnClick="HandleSearch">
+                    @_isSearching ? "Mencari…" : "Cari"
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+
+    @if (_results != null && _results.Any())
+    {
+        <MudTable Items="@_results"
+                  Hover="true"
+                  Elevation="1"
+                  Dense="true"
+                  Class="trend-table">
+
+            <HeaderContent>
+                <MudTh>Trend</MudTh>
+                <MudTh>Platform</MudTh>
+                <MudTh>Growth</MudTh>
+                <MudTh>Discovered</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>
+                    <MudText Typo="Typo.subtitle2" Class="fw-bold">
+                        @context.TrendName
+                    </MudText>
+                </MudTd>
+
+                <MudTd>
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Primary"
+                             Variant="Variant.Outlined">
+                        @context.Platform
+                    </MudChip>
+                </MudTd>
+
+                <MudTd>
+                    <MudProgressLinear Value="@(Convert.ToDouble(context.GrowthScore))"
+                                       Color="Color.Success"
+                                       Rounded="true"
+                                       Class="mb-1" />
+                    <MudText Typo="Typo.caption" Align="Align.Right">
+                        @context.GrowthScore%
+                    </MudText>
+                </MudTd>
+
+                <MudTd>
+                    @(context.DiscoveredAt?.ToString("dd MMM yyyy") ?? "-")
+                </MudTd>
+            </RowTemplate>
+
+        </MudTable>
+    }
+    else if (!_isSearching)
+    {
+        <MudPaper Class="pa-10 text-center rounded-xl">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff"
+                     Size="Size.Large"
+                     Color="Color.Secondary" />
+            <MudText Typo="Typo.subtitle1" Class="mt-2">
+                Tidak ada tren ditemukan
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Coba kata kunci lain atau refresh data.
+            </MudText>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    // Deklarasi variabel untuk memperbaiki error "does not exist in the current context"
+    private string _searchTerm = "";
+    private bool _isSearching = false;
+    private List<SocialTrend> _results = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HandleSearch();
+    }
+
+    private async Task HandleSearch()
+    {
+        _isSearching = true;
+        _results = await Repo.SearchTrendsAsync(_searchTerm);
+        _isSearching = false;
+    }
+}

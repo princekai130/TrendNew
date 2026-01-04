@@ -2,48 +2,79 @@
 @inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudPopoverProvider @rendermode="InteractiveServer" />
+<MudDialogProvider @rendermode="InteractiveServer" />
+<MudSnackbarProvider @rendermode="InteractiveServer" />
+
 <MudLayout>
     <MudAppBar Elevation="1">
-    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-    <MudText Typo="Typo.h5" Class="ml-3">Trendz</MudText>
-    <MudSpacer />
-    
-    <AuthorizeView>
-        <Authorized>
-            @* Menampilkan nama user di AppBar *@
-            <MudText Typo="Typo.body2" Class="mr-4">Halo, @context.User.Identity.Name</MudText>
-            <form action="/api/auth/logout" method="get">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Logout">
-                    Logout
-                </MudButton>
-            </form>
-        </Authorized>
-        <NotAuthorized>
-            <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
-        </NotAuthorized>
-    </AuthorizeView>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3 fw-bold">Trendz</MudText>
+        <MudSpacer />
 
-    <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-</MudAppBar>
+        <AuthorizeView>
+            <Authorized>
+                @* Fitur Upgrade: Hanya tampil jika user BUKAN Premium *@
+                <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
+                    <NotAuthorized>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   Href="/UpgradePremium"
+                                   StartIcon="@Icons.Material.Filled.Star"
+                                   Class="mr-4 px-4 rounded-pill gold-glow-btn">
+                            Upgrade Premium
+                        </MudButton>
+                    </NotAuthorized>
+                    <Authorized>
+                        @* Indikator jika user sudah Premium *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Verified" Class="mr-4">
+                            PRO
+                        </MudChip>
+                    </Authorized>
+                </AuthorizeView>
+
+                <MudText Typo="Typo.body2" Class="mr-4 d-none d-sm-flex">Halo, @context.User.Identity.Name</MudText>
+
+                <form action="/api/auth/logout" method="get" style="display: flex;">
+                    <MudIconButton ButtonType="ButtonType.Submit" Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Title="Logout" />
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">Daftar</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+    </MudAppBar>
+
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
+
     <MudMainContent Class="pt-16 pa-4">
         @Body
     </MudMainContent>
 </MudLayout>
 
+@* Tambahkan sedikit CSS untuk mempercantik tombol Upgrade *@
+<style>
+    .gold-glow-btn {
+        background: linear-gradient(90deg, #7e6fff 0%, #a196ff 100%);
+        box-shadow: 0 0 10px rgba(126, 111, 255, 0.4);
+        transition: 0.3s;
+        font-weight: bold;
+    }
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+        .gold-glow-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(126, 111, 255, 0.6);
+        }
+</style>
 
 @code {
+    // ... (Code Anda tetap sama di bawah ini)
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
@@ -51,7 +82,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-
         _theme = new()
         {
             PaletteLight = _lightPalette,
@@ -60,60 +90,37 @@
         };
     }
 
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    private void DarkModeToggle()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
+    private void DrawerToggle() => _drawerOpen = !_drawerOpen;
+    private void DarkModeToggle() => _isDarkMode = !_isDarkMode;
 
     private readonly PaletteLight _lightPalette = new()
     {
-        Black = "#110e2d",
-        AppbarText = "#424242",
-        AppbarBackground = "rgba(255,255,255,0.8)",
-        DrawerBackground = "#ffffff",
-        GrayLight = "#e8e8e8",
-        GrayLighter = "#f9f9f9",
+        Primary = "#7E6FFF",
+        Secondary = "#A196FF",
+        Background = "#F9FAFB",
+        Surface = "#FFFFFF",
+        AppbarBackground = "#FFFFFF",
+        AppbarText = "#1F2937",
+        TextPrimary = "#1F2937",
+        TextSecondary = "#6B7280",
+        DrawerBackground = "#FFFFFF",
+        DrawerText = "#1F2937"
     };
 
     private readonly PaletteDark _darkPalette = new()
     {
-        Primary = "#7e6fff",
-        Surface = "#1e1e2d",
-        Background = "#1a1a27",
-        BackgroundGray = "#151521",
-        AppbarText = "#92929f",
-        AppbarBackground = "rgba(26,26,39,0.8)",
-        DrawerBackground = "#1a1a27",
-        ActionDefault = "#74718e",
-        ActionDisabled = "#9999994d",
-        ActionDisabledBackground = "#605f6d4d",
-        TextPrimary = "#b2b0bf",
-        TextSecondary = "#92929f",
-        TextDisabled = "#ffffff33",
-        DrawerIcon = "#92929f",
-        DrawerText = "#92929f",
-        GrayLight = "#2a2833",
-        GrayLighter = "#1e1e2d",
-        Info = "#4a86ff",
-        Success = "#3dcb6c",
-        Warning = "#ffb545",
-        Error = "#ff3f5f",
-        LinesDefault = "#33323e",
-        TableLines = "#33323e",
-        Divider = "#292838",
-        OverlayLight = "#1e1e2d80",
+        Primary = "#9D92FF",
+        Secondary = "#B7B0FF",
+        Background = "#0F172A",       // dark blue gray
+        Surface = "#1E293B",
+        AppbarBackground = "#020617",
+        AppbarText = "#E5E7EB",
+        TextPrimary = "#E5E7EB",
+        TextSecondary = "#94A3B8",
+        DrawerBackground = "#020617",
+        DrawerText = "#E5E7EB"
     };
 
-    public string DarkLightModeButtonIcon => _isDarkMode switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
+
+    public string DarkLightModeButtonIcon => _isDarkMode ? Icons.Material.Rounded.AutoMode : Icons.Material.Outlined.DarkMode;
 }
-
-

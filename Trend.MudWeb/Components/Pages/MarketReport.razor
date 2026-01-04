@@ -1,0 +1,84 @@
+﻿@page "/MarketReport"
+@using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+@inject TrendRepo Repo
+@attribute [Authorize(Policy = "PremiumOnly")]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Market Analysis Report</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Laporan strategis berdasarkan data tren yang terkumpul.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download">
+            Export PDF
+        </MudButton>
+    </MudStack>
+
+    <MudGrid>
+        @if (_stats == null)
+        {
+            <MudItem xs="12"><MudProgressLinear Color="Color.Success" Indeterminate="true" /></MudItem>
+        }
+        else
+        {
+            @* --- Ringkasan Statistik --- *@
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h6">@_stats["Total"]</MudText>
+                    <MudText Typo="Typo.caption">Total Tren Terdata</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h6" Color="Color.Error">@_stats["Viral"]</MudText>
+                    <MudText Typo="Typo.caption">Tren Viral</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h6" Color="Color.Info">@_stats["TikTok"]</MudText>
+                    <MudText Typo="Typo.caption">Konten TikTok</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">@_stats["Instagram"]</MudText>
+                    <MudText Typo="Typo.caption">Konten Instagram</MudText>
+                </MudPaper>
+            </MudItem>
+
+            @* --- Visualisasi Chart --- *@
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-4">Distribusi Platform</MudText>
+                    <MudChart ChartType="ChartType.Donut" InputData="@_chartData" InputLabels="@_chartLabels" Width="100%" Height="250px" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-4">Efektivitas Strategi</MudText>
+                    <MudAlert Severity="Severity.Success" Class="mb-2">Tren Video Pendek mendominasi 70% pasar.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Class="mb-2">Engagement tertinggi ditemukan pada pukul 19:00 - 21:00.</MudAlert>
+                    <MudAlert Severity="Severity.Warning">Persaingan niche @(_stats["Total"] > 10 ? "Tinggi" : "Rendah").</MudAlert>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private Dictionary<string, int>? _stats;
+    private double[] _chartData = { };
+    private string[] _chartLabels = { "TikTok", "Instagram" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stats = await Repo.GetMarketReportStatsAsync();
+
+        // Menyiapkan data untuk Chart
+        _chartData = new double[] { _stats["TikTok"], _stats["Instagram"] };
+    }
+}
