@@ -5,47 +5,145 @@
 @inject TrendRepo Repo
 @attribute [Authorize(Policy = "PremiumOnly")]
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudStack Direction="Row" AlignItems="AlignItems.Center" Class="mb-6">
-        <MudIcon Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error" Size="Size.Large" />
-        <div>
-            <MudText Typo="Typo.h4" Class="fw-bold">The Hot List</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Tren dengan pertumbuhan tercepat dalam 24 jam terakhir.</MudText>
-        </div>
-    </MudStack>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=JetBrains+Mono:wght@700&display=swap');
+
+    .hotlist-container {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .hot-card {
+        background: var(--mud-palette-surface);
+        border: 1px solid rgba(255, 64, 129, 0.2);
+        border-radius: 24px !important;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+        .hot-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px -10px rgba(244, 67, 54, 0.3);
+            border-color: var(--mud-palette-error);
+        }
+
+    /* Angka urutan di background */
+    .rank-bg {
+        position: absolute;
+        top: -10px;
+        right: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 5rem;
+        font-weight: 800;
+        color: var(--mud-palette-error);
+        opacity: 0.05;
+        z-index: 0;
+        user-select: none;
+    }
+
+    .fire-gradient-btn {
+        background: linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%) !important;
+        color: white !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        box-shadow: 0 4px 15px rgba(255, 75, 43, 0.3) !important;
+    }
+
+    .heat-indicator {
+        width: 100%;
+        height: 6px;
+        background: var(--mud-palette-divider);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 12px 0;
+    }
+
+    .heat-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff9800, #f44336);
+        border-radius: 10px;
+    }
+
+    .platform-badge {
+        background: rgba(var(--mud-palette-text-primary-rgb), 0.05);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="hotlist-container mt-10">
+    @* HEADER SECTION *@
+    <div class="d-flex align-center justify-space-between mb-10">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+            <div style="background: rgba(244, 67, 54, 0.1); padding: 16px; border-radius: 20px;">
+                <MudIcon Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error" Size="Size.Large" />
+            </div>
+            <div>
+                <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Tren eksplosif yang mendominasi niche Anda saat ini.</MudText>
+            </div>
+        </MudStack>
+
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+            <MudChip T="string" Icon="@Icons.Material.Filled.Update" Color="Color.Error" Variant="Variant.Outlined">Real-time Updates</MudChip>
+        </MudHidden>
+    </div>
 
     @if (_hotTrends == null)
     {
-        <MudProgressLinear Color="Color.Error" Indeterminate="true" />
+        <MudGrid>
+            @for (int i = 0; i < 6; i++)
+            {
+                <MudItem xs="12" sm="6" md="4"><MudSkeleton Height="280px" Class="rounded-xl" /></MudItem>
+            }
+        </MudGrid>
     }
     else if (!_hotTrends.Any())
     {
-        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="rounded-lg">
-            Belum ada tren yang mencapai kategori "Hot" hari ini. Coba segarkan data melalui Dashboard.
-        </MudAlert>
+        <MudPaper Class="pa-12 rounded-xl text-center" Style="border: 2px dashed var(--mud-palette-divider); background: transparent;">
+            <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="fw-bold">Hening di Sini...</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Belum ada ledakan tren baru. Coba segarkan dashboard beberapa saat lagi.</MudText>
+        </MudPaper>
     }
     else
     {
         <MudGrid>
-            @foreach (var trend in _hotTrends)
+            @foreach (var (trend, index) in _hotTrends.Select((value, i) => (value, i)))
             {
                 <MudItem xs="12" sm="6" md="4">
-                    <MudPaper Class="pa-4 rounded-xl relative" Elevation="4" Style="border: 1px solid var(--mud-palette-error);">
-                        <div class="d-flex justify-space-between align-center mb-2">
-                            <MudChip T="string" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.Filled.TrendingUp">
-                                @trend.GrowthScore% Growth
+                    <MudPaper Class="pa-6 hot-card shadow-none" Elevation="0">
+                        <div class="rank-bg">@(index + 1 < 10 ? "0" + (index + 1) : index + 1)</div>
+
+                        <div class="d-flex justify-space-between align-center mb-6" style="position: relative; z-index: 1;">
+                            <div class="platform-badge">@trend.Platform</div>
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Bolt" Class="fw-bold">
+                                +@trend.GrowthScore%
                             </MudChip>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">@trend.Platform</MudText>
                         </div>
 
-                        <MudText Typo="Typo.h6" Class="fw-bold mb-2">@trend.TrendName</MudText>
+                        <div style="height: 80px; position: relative; z-index: 1;">
+                            <MudText Typo="Typo.h5" Class="fw-bold mb-1" Style="line-height: 1.2;">@trend.TrendName</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Terdeteksi @(new Random().Next(5, 59)) menit yang lalu</MudText>
+                        </div>
 
-                        <MudStack Row="true" Spacing="1" Class="mb-4">
-                            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Error" Size="Size.Small" />
-                            <MudText Typo="Typo.caption">Sangat Viral</MudText>
-                        </MudStack>
+                        <div style="position: relative; z-index: 1;">
+                            <div class="d-flex justify-space-between align-end mb-1">
+                                <MudText Typo="Typo.caption" Class="fw-bold">VIRAL INTENSITY</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Error" Class="fw-bold">@((trend.GrowthScore > 80) ? "EXTREME" : "HIGH")</MudText>
+                            </div>
+                            <div class="heat-indicator">
+                                <div class="heat-fill" style="width: @(Math.Min(100, trend.GrowthScore ?? 0).ToString())%"></div>
+                            </div>
+                        </div>
 
-                        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" StartIcon="@Icons.Material.Filled.AutoFixHigh">
+                        <MudButton Variant="Variant.Filled"
+                                   FullWidth="true"
+                                   Class="fire-gradient-btn mt-6 py-3"
+                                   StartIcon="@Icons.Material.Filled.AutoAwesome">
                             Generate Ide Konten
                         </MudButton>
                     </MudPaper>

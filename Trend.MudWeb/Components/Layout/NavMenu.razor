@@ -1,77 +1,116 @@
-﻿<MudNavMenu Class="trendz-nav">
+﻿<style>
+    .trendz-nav {
+        padding: 12px;
+        /* Menyamakan background dengan MainLayout agar seamless */
+        background-color: transparent !important;
+    }
+
+    .nav-section-title {
+        /* Warna teks judul seksi yang adaptif */
+        color: var(--mud-palette-text-disabled);
+        font-weight: 700;
+        font-size: 0.7rem;
+        letter-spacing: 1.2px;
+        padding: 24px 16px 8px 16px;
+        text-transform: uppercase;
+    }
+
+    .nav-item-custom {
+        border-radius: 12px !important;
+        margin: 4px 0;
+        transition: all 0.2s ease;
+        /* Warna teks default adaptif */
+        color: var(--mud-palette-text-secondary) !important;
+    }
+
+        /* Efek Hover */
+        .nav-item-custom:hover {
+            background-color: rgba(var(--mud-palette-primary-rgb), 0.08) !important;
+            color: var(--mud-palette-primary) !important;
+        }
+
+        /* Efek Active (Saat halaman dipilih) */
+        .nav-item-custom.active {
+            background-color: rgba(var(--mud-palette-primary-rgb), 0.15) !important;
+            color: var(--mud-palette-primary) !important;
+            font-weight: 600;
+        }
+
+        /* Ikon Navigasi */
+        .nav-item-custom .mud-nav-link-icon {
+            color: inherit !important; /* Ikon mengikuti warna teks */
+        }
+
+    .pro-badge-nav {
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: var(--mud-palette-warning);
+        color: var(--mud-palette-warning-darken);
+    }
+</style>
+
+<MudNavMenu Class="trendz-nav">
     <AuthorizeView>
         <Authorized>
+            @* --- BAGIAN UTAMA --- *@
+            <MudText Typo="Typo.caption" Class="nav-section-title">UTAMA</MudText>
 
-            <!-- UTAMA -->
-            <MudText Typo="Typo.caption" Class="nav-section-title">
-                UTAMA
-            </MudText>
-
-            <MudNavLink Href="dashboard"
-                        Match="NavLinkMatch.All"
-                        Icon="@Icons.Material.Filled.Dashboard"
-                        Class="nav-item">
+            <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.SpaceDashboard" Class="nav-item-custom">
                 Dashboard
             </MudNavLink>
 
-            <MudNavLink Href="trendexplorer"
-                        Icon="@Icons.Material.Filled.Explore"
-                        Class="nav-item">
+            <MudNavLink Href="trendexplorer" Icon="@Icons.Material.Outlined.Explore" Class="nav-item-custom">
                 Trend Explorer
             </MudNavLink>
 
-            <MudNavLink Href="Notifications"
-                        Icon="@Icons.Material.Filled.Notifications"
-                        Class="nav-item">
-                Notifikasi
-
-                @if (_unreadCount > 0)
-                {
-                    <MudBadge Content="@_unreadCount" Color="Color.Error" Overlap="true" Class="ml-auto" />
-                }
+            <MudNavLink Href="Notifications" Icon="@Icons.Material.Outlined.Notifications" Class="nav-item-custom">
+                <div class="d-flex align-center justify-space-between w-100">
+                    Notifikasi
+                    @if (_unreadCount > 0)
+                    {
+                        <MudBadge Content="@_unreadCount" Color="Color.Error" Overlap="false" Class="ml-2" />
+                    }
+                </div>
             </MudNavLink>
 
-            @code {
-                private int _unreadCount = 0;
-                // Anda bisa memanggil Repo.GetUnreadCount(userId) di sini jika ingin real-time
-            }
-
-            <!-- PREMIUM -->
-            <AuthorizeView Policy="PremiumOnly">
-                <Authorized Context="premiumContext">
-                    <MudDivider Class="my-3 opacity-50" />
-
-                    <MudText Typo="Typo.caption" Class="nav-section-title">
-                        <span>STRATEGIST TOOLS</span>
-                        <MudChip T="string"
-                                 Size="Size.Small"
-                                 Color="Color.Primary"
-                                 Variant="Variant.Filled"
-                                 Class="ml-auto pro-chip">
-                            PRO
-                        </MudChip>
+            @* --- BAGIAN PREMIUM --- *@
+            <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
+                <Authorized>
+                    <MudText Typo="Typo.caption" Class="nav-section-title d-flex align-center justify-space-between">
+                        STRATEGIST TOOLS
+                        <span class="pro-badge-nav">PRO</span>
                     </MudText>
 
-                    <MudNavLink Href="TheHotList"
-                                Icon="@Icons.Material.Filled.Whatshot"
-                                Class="nav-item premium-item">
+                    <MudNavLink Href="TheHotList" Icon="@Icons.Material.Outlined.Whatshot" Class="nav-item-custom">
                         The Hot List
                     </MudNavLink>
 
-                    <MudNavLink Href="CompetitorWatchlist"
-                                Icon="@Icons.Material.Filled.Groups"
-                                Class="nav-item premium-item">
+                    <MudNavLink Href="CompetitorWatchlist" Icon="@Icons.Material.Outlined.Groups" Class="nav-item-custom">
                         Competitor Watchlist
                     </MudNavLink>
 
-                    <MudNavLink Href="MarketReport"
-                                Icon="@Icons.Material.Filled.BarChart"
-                                Class="nav-item premium-item">
+                    <MudNavLink Href="MarketReport" Icon="@Icons.Material.Outlined.BarChart" Class="nav-item-custom">
                         Market Report
                     </MudNavLink>
                 </Authorized>
             </AuthorizeView>
 
+            @* --- BAGIAN ADMIN --- *@
+            <AuthorizeView Roles="Admin" Context="adminContext">
+                <Authorized>
+                    <MudText Typo="Typo.caption" Class="nav-section-title">ADMIN CONTROL</MudText>
+
+                    <MudNavLink Href="admin/settings" Icon="@Icons.Material.Outlined.AdminPanelSettings" Class="nav-item-custom">
+                        Admin Settings
+                    </MudNavLink>
+                </Authorized>
+            </AuthorizeView>
         </Authorized>
     </AuthorizeView>
 </MudNavMenu>
+
+@code {
+    private int _unreadCount = 3;
+}

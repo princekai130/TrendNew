@@ -119,3 +119,79 @@
     .trend-table tbody tr:hover {
         background-color: rgba(126, 111, 255, 0.08);
     }
+
+.hero-bg {
+    background: radial-gradient(circle at top, #1b1b2f, #0f0f1a);
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, #7c4dff, #00e5ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.feature-card {
+    border-radius: 16px;
+    transition: all .3s ease;
+}
+
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0,0,0,.25);
+    }
+
+.pricing-card {
+    border-radius: 16px;
+}
+
+.pricing-card-premium {
+    border-radius: 20px;
+    border: 2px solid var(--mud-palette-primary);
+    box-shadow: 0 30px 60px rgba(124,77,255,.25);
+}
+
+.dashboard-mockup {
+    background: linear-gradient(145deg, #1e1e2d, #2a2a3d);
+    border-radius: 20px;
+}
+
+/* Top nav (horizontal) styles used by MainLayout */
+.top-nav {
+    gap: 6px;
+    margin-left: 12px;
+    align-items: center;
+}
+
+    /* horizontal nav items: compact and consistent */
+    .top-nav .nav-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: background-color 0.18s ease, transform 0.12s ease;
+    }
+
+        .top-nav .nav-item:hover {
+            background-color: rgba(126, 111, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+/* notification badge in top nav */
+.top-badge {
+    font-size: 0.65rem;
+    transform: translateY(-1px);
+}
+
+/* user name truncation for header */
+.user-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-item:hover {
+    background-color: rgba(244, 67, 54, 0.08) !important; /* Warna merah tipis */
+}

@@ -31,10 +31,12 @@ namespace Trend.MudWeb.Controllers
             {
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.Username ?? "Unknown"),
+                    new Claim(ClaimTypes.Email, user.Email ?? ""),
+                    // Gunakan 'User' jika di DB role-nya null
+                    new Claim(ClaimTypes.Role, user.Role ?? "User"),
                     new Claim("UserId", user.UserId.ToString()),
-                    // Menyimpan status langganan sebagai Claim untuk Otorisasi 
+                    // Gunakan 'Free' jika di DB statusnya null
                     new Claim("SubscriptionStatus", user.SubscriptionStatus ?? "Free")
                 };
 

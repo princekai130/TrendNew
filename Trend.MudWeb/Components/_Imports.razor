@@ -3,12 +3,16 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.JSInterop
 @using MudBlazor
 @using MudBlazor.Services
 @using Trend.MudWeb
 @using Trend.MudWeb.Components
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using Trend.MudWeb.Services
+
+@* Baris di bawah ini sangat penting untuk memperbaiki error InteractiveServer *@
+@using static Microsoft.AspNetCore.Components.Web.RenderMode

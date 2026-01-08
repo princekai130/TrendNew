@@ -175,5 +175,7 @@ public partial class TrendContext : DbContext
         OnModelCreatingPartial(modelBuilder);
     }
 
+    public DbSet<SystemSetting> SystemSettings { get; set; }
+
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

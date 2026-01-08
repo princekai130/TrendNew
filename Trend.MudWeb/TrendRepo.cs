@@ -295,5 +295,48 @@ namespace Trend.MudWeb
 
         #endregion
 
+        #region System Settings
+
+        /// <summary>
+        /// Mengambil nilai konfigurasi sistem berdasarkan key.
+        /// </summary>
+        public async Task<string?> GetSettingAsync(string key)
+        {
+            // Mencari di tabel SystemSettings berdasarkan Primary Key (SettingKey)
+            var setting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingKey == key);
+
+            return setting?.SettingValue;
+        }
+
+        /// <summary>
+        /// Memperbarui atau menambah konfigurasi sistem baru.
+        /// </summary>
+        public async Task UpdateSettingAsync(string key, string value)
+        {
+            var existingSetting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingKey == key);
+
+            if (existingSetting != null)
+            {
+                // Jika sudah ada, update nilainya
+                existingSetting.SettingValue = value;
+            }
+            else
+            {
+                // Jika belum ada, buat baru
+                var newSetting = new SystemSetting
+                {
+                    SettingKey = key,
+                    SettingValue = value
+                };
+                _context.SystemSettings.Add(newSetting);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        #endregion
+
     }
 }

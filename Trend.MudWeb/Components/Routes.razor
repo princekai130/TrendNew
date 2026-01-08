@@ -1,6 +1,10 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@* File: Routes.razor *@
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        @* Tambahkan rendermode di sini untuk memastikan Layout menjadi interaktif *@
+        <RouteView RouteData="routeData"
+                   DefaultLayout="typeof(Layout.MainLayout)"
+                   @rendermode="InteractiveServer" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>

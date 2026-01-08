@@ -1,44 +1,132 @@
 ﻿@page "/register"
 @using Trend.MudWeb.Models
+@using MudBlazor
 @inject TrendRepo Repo
 @inject NavigationManager NavManager
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 90vh;">
-    <MudPaper Elevation="4" Class="pa-8" Width="100%" Style="max-width: 450px; border-radius: 12px;">
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--mud-palette-background-grey);
+        font-family: 'Outfit', sans-serif;
+        position: relative;
+        padding: 40px 20px;
+        overflow-x: hidden;
+    }
+
+    /* Dekorasi background adaptif */
+    .bg-decoration {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: var(--mud-palette-primary);
+        filter: blur(150px);
+        opacity: 0.08;
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    .register-card {
+        width: 100%;
+        max-width: 500px;
+        background-color: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 24px;
+        padding: 48px;
+        box-shadow: var(--mud-elevation-6);
+        z-index: 1;
+    }
+
+    .trend-logo-svg {
+        filter: drop-shadow(0px 4px 8px rgba(var(--mud-palette-primary-rgb), 0.3));
+    }
+
+    .input-field {
+        background-color: var(--mud-palette-background-grey) !important;
+        border-radius: 12px !important;
+    }
+
+    .btn-register {
+        border-radius: 12px !important;
+        height: 56px;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        font-size: 1.1rem !important;
+        box-shadow: 0 8px 20px -6px rgba(var(--mud-palette-primary-rgb), 0.4) !important;
+    }
+
+    /* Transparansi kartu di mode gelap */
+    .mud-theme-dark .register-card {
+        background-color: rgba(30, 32, 47, 0.8);
+        backdrop-filter: blur(12px);
+    }
+
+    .niche-select {
+        --mud-palette-surface: var(--mud-palette-background-grey);
+    }
+</style>
+
+<div class="register-container">
+    <div class="bg-decoration" style="top: -150px; right: -150px;"></div>
+    <div class="bg-decoration" style="bottom: -150px; left: -150px;"></div>
+
+    <div class="register-card animate__animated animate__fadeInUp">
+        <div class="text-center mb-8">
+            <div class="d-flex justify-center align-center mb-4">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="trend-logo-svg">
+                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--mud-palette-primary)" stroke="var(--mud-palette-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <MudText Typo="Typo.h4" Class="ml-3 fw-bold" Style="letter-spacing: -1.5px;">Trendz</MudText>
+            </div>
+            <MudText Typo="Typo.h5" Class="fw-bold mb-1">Buat Akun Baru</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Bergabung dengan komunitas kreator cerdas.</MudText>
+        </div>
+
+        @if (NavManager.Uri.Contains("error=EmailExists"))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-6 rounded-xl animate__animated animate__shakeX">
+                Email sudah digunakan, gunakan email lain.
+            </MudAlert>
+        }
+
         <form action="/api/auth/register" method="post">
-            @* Hidden input untuk mengirim ID Niche ke Controller *@
             <input type="hidden" name="nicheId" value="@_selectedNicheId" />
 
             <MudStack Spacing="4">
-                <div class="d-flex flex-column align-center mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Primary" Size="Size.Large" />
-                    <MudText Typo="Typo.h4" Class="fw-bold">Daftar Trendz</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Otomatisasi pemantauan tren harian [cite: 11]</MudText>
-                </div>
+                <MudTextField T="string" Name="username" Label="Nama Lengkap"
+                              Variant="Variant.Outlined" Required="true"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person"
+                              AdornmentColor="Color.Primary"
+                              Placeholder="Jhon Doe" Class="input-field" />
 
-                @if (NavManager.Uri.Contains("error=EmailExists"))
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-2">Email sudah terdaftar!</MudAlert>
-                }
+                <MudTextField T="string" Name="email" Label="Email"
+                              Variant="Variant.Outlined" InputType="InputType.Email"
+                              Required="true" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Email"
+                              AdornmentColor="Color.Primary"
+                              Placeholder="nama@email.com" Class="input-field" />
 
-                @* Gunakan Shrink="true" untuk mencegah placeholder bertumpuk *@
-                <MudTextField T="string" Name="username" Label="Nama Lengkap" Variant="Variant.Outlined"
-                              Required="true" ShrinkLabel="true" Placeholder="Masukkan nama Anda" />
+                <MudTextField T="string" Name="password" Label="Password"
+                              Variant="Variant.Outlined" InputType="InputType.Password"
+                              Required="true" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Lock"
+                              AdornmentColor="Color.Primary"
+                              Placeholder="Minimal 8 karakter" Class="input-field" />
 
-                <MudTextField T="string" Name="email" Label="Email" Variant="Variant.Outlined"
-                              InputType="InputType.Email" Required="true" ShrinkLabel="true" Placeholder="nama@email.com" />
-
-                <MudTextField T="string" Name="password" Label="Password" Variant="Variant.Outlined"
-                              InputType="InputType.Password" Required="true" ShrinkLabel="true" Placeholder="******" />
-
-                @* Perbaikan MudSelect: Pastikan T="int" dan menampilkan NicheName *@
-                <MudSelect T="int" Label="Pilih Niche Konten"
+                <MudSelect T="int" Label="Fokus Niche"
                            @bind-Value="_selectedNicheId"
                            Variant="Variant.Outlined"
                            Required="true"
-                           AnchorOrigin="Origin.BottomCenter"
-                           ShrinkLabel="true"
-                           Placeholder="Pilih kategori bidang Anda">
+                           Adornment="Adornment.Start"
+                           AdornmentIcon="@Icons.Material.Outlined.AutoAwesome"
+                           AdornmentColor="Color.Primary"
+                           Class="input-field niche-select"
+                           AnchorOrigin="Origin.BottomCenter">
                     @if (_niches != null && _niches.Any())
                     {
                         @foreach (var niche in _niches)
@@ -48,22 +136,26 @@
                     }
                     else
                     {
-                        <MudSelectItem T="int" Disabled="true" Value="0">Memuat data niche...</MudSelectItem>
+                        <MudSelectItem T="int" Value="0">Memuat niche...</MudSelectItem>
                     }
                 </MudSelect>
 
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
-                           Color="Color.Primary" Size="Size.Large" FullWidth="true" Class="mt-4">
+                           Color="Color.Primary" FullWidth="true"
+                           Class="btn-register mt-4">
                     Daftar Sekarang
                 </MudButton>
-
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-2">
-                    Sudah punya akun? <MudLink Href="/login">Masuk di sini</MudLink>
-                </MudText>
             </MudStack>
         </form>
-    </MudPaper>
-</MudContainer>
+
+        <div class="text-center mt-10">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Sudah memiliki akun?
+                <MudLink Href="/login" Color="Color.Primary" Style="font-weight: 700; text-decoration: none;">Masuk</MudLink>
+            </MudText>
+        </div>
+    </div>
+</div>
 
 @code {
     private List<Nich> _niches = new();
@@ -71,7 +163,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Pastikan Repo mengambil data dari DB SQLite
         var data = await Repo.GetAllNichesAsync();
         if (data != null)
         {

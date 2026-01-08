@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
@@ -5,7 +6,7 @@ using MudBlazor.Services;
 using Trend.MudWeb;
 using Trend.MudWeb.Components;
 using Trend.MudWeb.Models;
-using Trend.MudWeb.Services; // Pastikan namespace ini sesuai dengan folder tempat Anda menyimpan class tadi
+using Trend.MudWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,13 +18,13 @@ builder.Services.AddDbContext<TrendContext>(options =>
 // --- REGISTRASI SERVICES BERDASARKAN CLASS DIAGRAM LAPORAN ---
 
 // 2. Registrasi Repository
-builder.Services.AddHttpClient<ScrapingService>(); // Hapus 's' jika di class-nya tunggal
+builder.Services.AddHttpClient<ScrapingService>();
 builder.Services.AddScoped<TrendRepo>();
-builder.Services.AddScoped<TrendAnalyzer>();       // Sesuai Gambar 5.2 
-builder.Services.AddScoped<Report>();              // Sesuai Gambar 5.2 
+builder.Services.AddScoped<TrendAnalyzer>();
+builder.Services.AddScoped<Report>();
 builder.Services.AddScoped<Trend.MudWeb.Services.Notifications>();
 
-// Tambahkan layanan MudBlazor
+// 3. Tambahkan layanan MudBlazor
 builder.Services.AddMudServices(config => {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopRight;
     config.SnackbarConfiguration.VisibleStateDuration = 5000;
@@ -32,9 +33,6 @@ builder.Services.AddMudServices(config => {
 // 4. Registrasi Konfigurasi API (dari appsettings.json)
 builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
 
-// -----------------------------------------------------------
-
-
 builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
@@ -42,13 +40,22 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Konfigurasi Autentikasi & Otorisasi
-builder.Services.AddAuthentication("Cookies")
-    .AddCookie("Cookies", options =>
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
     {
-        options.Cookie.Name = "Trendz_Auth";
         options.LoginPath = "/login";
+        options.LogoutPath = "/api/auth/logout";
         options.AccessDeniedPath = "/access-denied";
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PremiumOnly", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("Admin") ||
+            context.User.HasClaim("SubscriptionStatus", "Premium")
+        ));
+});
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -69,26 +76,29 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-
+app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// PENTING: UseRouting HARUS sebelum UseAuthentication
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseHttpsRedirection();
-
-
 app.UseAntiforgery();
 
+// CRITICAL FIX: Mapping endpoints
+// JANGAN panggil app.MapBlazorHub() secara terpisah!
+// AddInteractiveServerRenderMode() sudah otomatis memanggil MapBlazorHub
 app.MapControllers();
-app.MapBlazorHub();
 
 app.MapStaticAssets();
+
+// PERBAIKAN: Hanya panggil MapRazorComponents SATU KALI
+// Jangan ada app.MapBlazorHub() lagi setelah ini!
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

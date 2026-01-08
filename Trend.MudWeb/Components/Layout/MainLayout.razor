@@ -1,93 +1,220 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using MudBlazor
 @inherits LayoutComponentBase
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
-<MudPopoverProvider @rendermode="InteractiveServer" />
-<MudDialogProvider @rendermode="InteractiveServer" />
-<MudSnackbarProvider @rendermode="InteractiveServer" />
+<MudThemeProvider Theme="_theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
+    <MudAppBar Elevation="0" Class="main-appbar">
+        @* Menu Toggle *@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3 fw-bold">Trendz</MudText>
-        <MudSpacer />
 
+        @* Logo Section - SVG Tidak Diubah *@
+        <MudLink Href="/" Underline="Underline.None" Class="d-flex align-center ml-3 logo-container">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="trend-logo-svg">
+                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--mud-palette-primary)" stroke="var(--mud-palette-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <MudText Typo="Typo.h5" Class="ml-2 logo-text">
+                Trendz
+            </MudText>
+        </MudLink>
+
+        @* Navigasi Tengah - Dibuat Flex Wrap agar tidak bertumpukan *@
         <AuthorizeView>
-            <Authorized>
-                @* Fitur Upgrade: Hanya tampil jika user BUKAN Premium *@
-                <AuthorizeView Policy="PremiumOnly" Context="premiumContext">
-                    <NotAuthorized>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Size="Size.Small"
-                                   Href="/UpgradePremium"
-                                   StartIcon="@Icons.Material.Filled.Star"
-                                   Class="mr-4 px-4 rounded-pill gold-glow-btn">
-                            Upgrade Premium
-                        </MudButton>
-                    </NotAuthorized>
-                    <Authorized>
-                        @* Indikator jika user sudah Premium *@
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Verified" Class="mr-4">
-                            PRO
-                        </MudChip>
-                    </Authorized>
-                </AuthorizeView>
+            <Authorized Context="userContext">
+                <div class="top-nav d-none d-lg-flex align-center">
+                    <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Class="nav-item">Dashboard</MudNavLink>
+                    <MudNavLink Href="trendexplorer" Icon="@Icons.Material.Filled.Explore" Class="nav-item">Explorer</MudNavLink>
 
-                <MudText Typo="Typo.body2" Class="mr-4 d-none d-sm-flex">Halo, @context.User.Identity.Name</MudText>
-
-                <form action="/api/auth/logout" method="get" style="display: flex;">
-                    <MudIconButton ButtonType="ButtonType.Submit" Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Title="Logout" />
-                </form>
+                    <AuthorizeView Policy="PremiumOnly">
+                        <Authorized Context="premiumContext">
+                            <div class="nav-divider"></div>
+                            <MudNavLink Href="TheHotList"
+                                        Icon="@Icons.Material.Filled.Whatshot"
+                                        Class="nav-item premium-item"
+                                        Style="white-space: nowrap !important; display: inline-flex; align-items: center; min-width: max-content;">
+                                Hot List
+                            </MudNavLink>
+                            <MudNavLink Href="CompetitorWatchlist" Icon="@Icons.Material.Filled.Groups" Class="nav-item premium-item">Watchlist</MudNavLink>
+                            <MudNavLink Href="MarketReport" Icon="@Icons.Material.Filled.BarChart" Class="nav-item premium-item">Report</MudNavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
             </Authorized>
-            <NotAuthorized>
-                <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
-                <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">Daftar</MudButton>
-            </NotAuthorized>
         </AuthorizeView>
 
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudSpacer />
+
+        @* Sisi Kanan: Status & User Info *@
+        <div class="d-flex align-center gap-2">
+            <AuthorizeView>
+                <Authorized Context="authContext">
+                   
+                    @* TOMBOL NOTIFIKASI LONCENG *@
+                    <MudTooltip Text="Notifikasi">
+                        <MudIconButton Href="Notifications"
+                                       Icon="@Icons.Material.Rounded.Notifications"
+                                       Style="@($"color: {(_isDarkMode ? "var(--mud-palette-text-primary)" : "var(--mud-palette-primary)")};")"
+                                       Class="mr-2">
+                        </MudIconButton>
+                        @if (_unreadCount > 0)
+                        {
+                            @* Badge dibuat melayang di atas lonceng *@
+                            <MudBadge Content="@_unreadCount"
+                                      Color="Color.Error"
+                                      Overlap="true"
+                                      Bordered="true"
+                                      Class="mt-n8 ml-n6" />
+                        }
+                    </MudTooltip>
+
+                    @* 1. Badge Admin (Warna & Tanda Berbeda: Info/Cyan) *@
+                    <AuthorizeView Roles="Admin" Context="adminContext">
+                        <Authorized>
+                            <MudChip T="string" Icon="@Icons.Material.Filled.AdminPanelSettings" Color="Color.Info" Variant="Variant.Filled" Size="Size.Small" Class="mr-1 fw-bold">ADMIN</MudChip>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    @* 2. Status Akun (Pro/Upgrade) *@
+                    <AuthorizeView Policy="PremiumOnly" Context="statusContext">
+                        <Authorized>
+                            <MudChip T="string" Icon="@Icons.Material.Filled.Verified" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="pro-chip mr-1">PRO</MudChip>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudButton Href="/UpgradePremium" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Star" Class="rounded-pill gold-glow-btn mr-1 d-none d-sm-flex">Upgrade</MudButton>
+                        </NotAuthorized>
+                    </AuthorizeView>
+
+                    @* 3. User Avatar & Name *@
+                    <div class="d-flex align-center cursor-pointer ml-2">
+                        <MudText Typo="Typo.body2" Class="mr-2 user-name d-none d-sm-flex">
+                            Hi, <strong>@authContext.User.Identity?.Name</strong>
+                        </MudText>
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Style="width:32px; height:32px;">
+                            @authContext.User.Identity?.Name?[0].ToString().ToUpper()
+                        </MudAvatar>
+                    </div>
+
+                    @* 4. Logout (Code Tidak Diubah) *@
+                    <form action="/api/auth/logout" method="get" style="display: flex;" class="ml-1">
+                        <MudIconButton ButtonType="ButtonType.Submit" Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Title="Logout" />
+                    </form>
+
+                </Authorized>
+
+                <NotAuthorized>
+                    <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                    <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2 rounded-lg">Daftar</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+
+            @* Dark Mode Toggle - Warna Adaptif *@
+            <MudIconButton Icon="@(DarkLightModeButtonIcon)" 
+                           Style="@($"color: {(_isDarkMode ? "#FFD700" : "#594AE2")};")" 
+                           OnClick="@DarkModeToggle" />
+        </div>
     </MudAppBar>
 
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0" Style="background-color: var(--mud-palette-background) !important; border-right: 1px solid var(--mud-palette-divider);">
         <NavMenu />
     </MudDrawer>
 
-    <MudMainContent Class="pt-16 pa-4">
+    <MudMainContent Class="main-content-area">
         @Body
     </MudMainContent>
 </MudLayout>
 
-@* Tambahkan sedikit CSS untuk mempercantik tombol Upgrade *@
 <style>
-    .gold-glow-btn {
-        background: linear-gradient(90deg, #7e6fff 0%, #a196ff 100%);
-        box-shadow: 0 0 10px rgba(126, 111, 255, 0.4);
-        transition: 0.3s;
-        font-weight: bold;
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+    /* Warna Judul Halaman Adaptif agar selalu terlihat */
+    .main-appbar {
+        backdrop-filter: blur(15px);
+        background: rgba(var(--mud-palette-surface-rgb), 0.85) !important;
+        border-bottom: 1px solid var(--mud-palette-divider) !important;
+        color: var(--mud-palette-text-primary) !important;
     }
 
-        .gold-glow-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(126, 111, 255, 0.6);
-        }
+    .logo-text {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        letter-spacing: -1.5px;
+        color: var(--mud-palette-text-primary) !important; /* Warna judul brand */
+    }
+
+    .top-nav {
+        margin-left: 20px;
+        gap: 4px;
+    }
+
+    .nav-item {
+        color: var(--mud-palette-text-secondary) !important;
+        border-radius: 10px !important;
+        transition: 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .nav-item:hover, .nav-item.active {
+        background: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
+        color: var(--mud-palette-primary) !important;
+    }
+
+    .nav-divider {
+        width: 1px;
+        height: 20px;
+        background: var(--mud-palette-divider);
+        margin: 0 10px;
+    }
+
+    .main-content-area {
+        padding-top: 80px !important;
+        background-color: var(--mud-palette-background);
+        color: var(--mud-palette-text-primary); /* Menjamin teks body terlihat */
+    }
+
+    /* Badge & Button Styling */
+    .gold-glow-btn {
+        background: linear-gradient(90deg, #7e6fff 0%, #a196ff 100%);
+        box-shadow: 0 4px 10px rgba(126, 111, 255, 0.3);
+        text-transform: none;
+        font-weight: 700;
+    }
+
+    .pro-chip { font-weight: 800; letter-spacing: 0.5px; }
+
+    .user-name {
+        color: var(--mud-palette-text-primary);
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Logo Hover */
+    .trend-logo-svg { transition: 0.3s; }
+    .logo-container:hover .trend-logo-svg { transform: scale(1.1) rotate(-5deg); }
 </style>
 
 @code {
-    // ... (Code Anda tetap sama di bawah ini)
-    private bool _drawerOpen = true;
+    private bool _drawerOpen = false;
     private bool _isDarkMode = true;
-    private MudTheme? _theme = null;
+    private MudTheme _theme = new();
+    private int _unreadCount = 3; 
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-        _theme = new()
+        _theme = new MudTheme()
         {
             PaletteLight = _lightPalette,
             PaletteDark = _darkPalette,
-            LayoutProperties = new LayoutProperties()
+            LayoutProperties = new LayoutProperties() { DefaultBorderRadius = "12px" }
         };
+        // Setup Font Global agar konsisten
+        _theme.Typography.Default.FontFamily = new[] { "Outfit", "sans-serif" };
     }
 
     private void DrawerToggle() => _drawerOpen = !_drawerOpen;
@@ -95,32 +222,27 @@
 
     private readonly PaletteLight _lightPalette = new()
     {
-        Primary = "#7E6FFF",
-        Secondary = "#A196FF",
-        Background = "#F9FAFB",
-        Surface = "#FFFFFF",
+        Primary = "#594AE2",
         AppbarBackground = "#FFFFFF",
-        AppbarText = "#1F2937",
-        TextPrimary = "#1F2937",
-        TextSecondary = "#6B7280",
-        DrawerBackground = "#FFFFFF",
-        DrawerText = "#1F2937"
+        AppbarText = "#111827",
+        TextPrimary = "#111827",
+        TextSecondary = "#4B5563",
+        Surface = "#FFFFFF",
+        Background = "#F3F4F6",
+        Divider = "#E5E7EB"
     };
 
     private readonly PaletteDark _darkPalette = new()
     {
         Primary = "#9D92FF",
-        Secondary = "#B7B0FF",
-        Background = "#0F172A",       // dark blue gray
-        Surface = "#1E293B",
-        AppbarBackground = "#020617",
-        AppbarText = "#E5E7EB",
-        TextPrimary = "#E5E7EB",
-        TextSecondary = "#94A3B8",
-        DrawerBackground = "#020617",
-        DrawerText = "#E5E7EB"
+        AppbarBackground = "#030712",
+        AppbarText = "#F9FAFB",
+        TextPrimary = "#F9FAFB",
+        TextSecondary = "#9CA3AF",
+        Surface = "#111827",
+        Background = "#030712",
+        Divider = "rgba(255, 255, 255, 0.1)"
     };
 
-
-    public string DarkLightModeButtonIcon => _isDarkMode ? Icons.Material.Rounded.AutoMode : Icons.Material.Outlined.DarkMode;
+    public string DarkLightModeButtonIcon => _isDarkMode ? Icons.Material.Rounded.LightMode : Icons.Material.Rounded.DarkMode;
 }

@@ -1,66 +1,164 @@
 ﻿@page "/login"
 @inject NavigationManager NavManager
 
-<MudContainer MaxWidth="MaxWidth.False" Class="login-bg">
-    <MudPaper Elevation="8" Class="login-card">
+<style>
+    /* Menggunakan font Outfit agar senada dengan logo */
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--mud-palette-background-grey);
+        font-family: 'Outfit', sans-serif;
+        position: relative;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    /* Dekorasi background agar tidak sepi saat posisi center */
+    .bg-decoration {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: var(--mud-palette-primary);
+        filter: blur(120px);
+        opacity: 0.1;
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 450px;
+        background-color: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: var(--mud-elevation-4);
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .trend-logo-svg {
+        filter: drop-shadow(0px 4px 8px rgba(var(--mud-palette-primary-rgb), 0.3));
+    }
+
+    .input-field {
+        background-color: var(--mud-palette-background-grey) !important;
+        border-radius: 12px !important;
+    }
+
+    .btn-login {
+        border-radius: 12px !important;
+        height: 52px;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        font-size: 1rem !important;
+        box-shadow: 0 8px 16px -4px rgba(var(--mud-palette-primary-rgb), 0.3) !important;
+    }
+
+    .btn-google {
+        border-radius: 12px !important;
+        height: 50px;
+        text-transform: none !important;
+        border: 1px solid var(--mud-palette-divider) !important;
+    }
+
+    /* Penyesuaian khusus Dark Mode */
+    .mud-theme-dark .login-card {
+        background-color: rgba(30, 32, 47, 0.8);
+        backdrop-filter: blur(10px);
+    }
+</style>
+
+<div class="login-container">
+    <div class="bg-decoration" style="top: -100px; left: -100px;"></div>
+    <div class="bg-decoration" style="bottom: -100px; right: -100px;"></div>
+
+    <div class="login-card animate__animated animate__fadeIn">
+        <div class="d-flex flex-column align-center mb-8">
+            <div class="mb-2">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="trend-logo-svg">
+                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--mud-palette-primary)" stroke="var(--mud-palette-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+            <MudText Typo="Typo.h4" Class="fw-bold" Style="color: var(--mud-palette-text-primary); letter-spacing: -1.5px;">
+                Trendz
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-1" Style="color: var(--mud-palette-text-secondary);">
+                Masuk untuk melanjutkan ke dashboard
+            </MudText>
+        </div>
+
+        @if (NavManager.Uri.Contains("error=true"))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-6 rounded-xl">
+                Kredensial salah, silakan cek kembali.
+            </MudAlert>
+        }
+
         <form action="/api/auth/login" method="post">
-            <MudStack Spacing="3">
-
-                <!-- Logo & Branding -->
-                <div class="text-center mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp"
-                             Color="Color.Primary"
-                             Size="Size.Large"
-                             Class="mb-2" />
-
-                    <MudText Typo="Typo.h4" Class="fw-bold">
-                        Trendz
-                    </MudText>
-
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Temukan tren sebelum viral 🚀
-                    </MudText>
-                </div>
-
-                @if (NavManager.Uri.Contains("error=true"))
-                {
-                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense>
-                        Email atau password salah
-                    </MudAlert>
-                }
-
-                <!-- Email -->
+            <MudStack Spacing="4">
                 <MudTextField T="string"
                               Name="email"
-                              Label="Email"
+                              Label="Email Address"
                               Variant="Variant.Outlined"
-                              Required
                               FullWidth
                               Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Email" />
+                              AdornmentIcon="@Icons.Material.Outlined.Email"
+                              AdornmentColor="Color.Primary"
+                              Class="input-field" />
 
-                <!-- Password -->
-                <MudTextField T="string"
-                              Name="password"
-                              Label="Password"
-                              Variant="Variant.Outlined"
-                              InputType="InputType.Password"
-                              Required
-                              FullWidth
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Lock" />
+                <div class="d-flex flex-column">
+                    <MudTextField T="string"
+                                  Name="password"
+                                  Label="Password"
+                                  Variant="Variant.Outlined"
+                                  InputType="InputType.Password"
+                                  FullWidth
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Outlined.Lock"
+                                  AdornmentColor="Color.Primary"
+                                  Class="input-field" />
+                    <MudLink href="/forgot-password" Typo="Typo.caption" Class="mt-2 align-self-end" Style="color: var(--mud-palette-text-secondary);">
+                        Lupa Password?
+                    </MudLink>
+                </div>
 
-                <!-- Button -->
                 <MudButton ButtonType="ButtonType.Submit"
                            Variant="Variant.Filled"
                            Color="Color.Primary"
-                           Size="Size.Large"
                            FullWidth
-                           Class="mt-2 login-btn">
-                    Masuk ke Trendz
+                           Class="btn-login mt-2">
+                    Masuk Sekarang
                 </MudButton>
 
+                <div class="d-flex align-center my-2">
+                    <MudDivider Class="flex-grow-1" Style="opacity: 0.5;" />
+                    <MudText Typo="Typo.caption" Class="mx-4" Style="color: var(--mud-palette-text-disabled);">ATAU</MudText>
+                    <MudDivider Class="flex-grow-1" Style="opacity: 0.5;" />
+                </div>
+
+                <MudButton Variant="Variant.Outlined"
+                           FullWidth
+                           StartIcon="@Icons.Custom.Brands.Google"
+                           Class="btn-google">
+                    Lanjutkan dengan Google
+                </MudButton>
             </MudStack>
         </form>
-    </MudPaper>
-</MudContainer>
+
+        <div class="text-center mt-8">
+            <MudText Typo="Typo.body2" Style="color: var(--mud-palette-text-secondary);">
+                Belum punya akun?
+                <MudLink href="/register" Color="Color.Primary" Underline="Underline.None" Style="font-weight: 700;">Daftar Gratis</MudLink>
+            </MudText>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Logic tambahan bisa diletakkan di sini
+}

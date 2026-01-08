@@ -6,56 +6,200 @@
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-12">
-    <MudPaper Class="pa-8 rounded-xl text-center" Elevation="4">
-        <MudIcon Icon="@Icons.Material.Filled.Stars" Color="Color.Secondary" Size="Size.Large" Style="font-size: 5rem;" />
-        <MudText Typo="Typo.h4" Class="fw-bold mt-4">Trendz Premium</MudText>
-        <MudText Typo="Typo.body1" Class="mt-2 mb-8">
-            Dapatkan akses penuh ke Strategi Konten AI, Watchlist Kompetitor, dan Laporan Strategis.
-        </MudText>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
 
-        <MudList T="string" Dense="true" Class="text-start mb-8">
-            <MudListItem Icon="@Icons.Material.Filled.Check" IconColor="Color.Success">Analisis Tren TikTok Mendalam</MudListItem>
-            <MudListItem Icon="@Icons.Material.Filled.Check" IconColor="Color.Success">Monitoring 10+ Kompetitor</MudListItem>
-            <MudListItem Icon="@Icons.Material.Filled.Check" IconColor="Color.Success">Ekspor Laporan PDF Bulanan</MudListItem>
-        </MudList>
+    .upgrade-container {
+        font-family: 'Outfit', sans-serif;
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+    }
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Secondary"
-                   Size="Size.Large"
-                   FullWidth="true"
-                   OnClick="ProcessUpgrade"
-                   StartIcon="@Icons.Material.Filled.Bolt">
-            Upgrade Sekarang - Rp 99k/bln
-        </MudButton>
+    .pricing-card {
+        background: var(--mud-palette-surface);
+        border: 2px solid var(--mud-palette-primary);
+        border-radius: 32px !important;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
 
-        <MudButton Variant="Variant.Text" Class="mt-4" OnClick="@(() => NavManager.NavigateTo("/dashboard"))">
-            Mungkin Nanti
-        </MudButton>
-    </MudPaper>
-</MudContainer>
+        .pricing-card::before {
+            content: "PRO ACCESS";
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--mud-palette-primary);
+            color: white;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+    .price-tag {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1;
+        background: linear-gradient(90deg, var(--mud-palette-primary) 0%, #a196ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .feature-item {
+        background: rgba(var(--mud-palette-primary-rgb), 0.05);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        transition: 0.2s;
+    }
+
+        .feature-item:hover {
+            background: rgba(var(--mud-palette-primary-rgb), 0.1);
+            transform: translateX(5px);
+        }
+
+    .glow-btn-premium {
+        background: linear-gradient(90deg, #594AE2 0%, #7E6FFF 100%) !important;
+        color: white !important;
+        border-radius: 16px !important;
+        height: 64px;
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
+        box-shadow: 0 10px 25px -5px rgba(89, 74, 226, 0.5) !important;
+    }
+
+    .bg-blur {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: var(--mud-palette-primary);
+        filter: blur(150px);
+        opacity: 0.15;
+        z-index: 0;
+    }
+</style>
+
+<div class="upgrade-container">
+    <div class="bg-blur" style="top: 10%; left: 10%;"></div>
+    <div class="bg-blur" style="bottom: 10%; right: 10%;"></div>
+
+    <MudContainer MaxWidth="MaxWidth.Small" Class="relative" Style="z-index: 1;">
+        <MudPaper Class="pa-10 pricing-card shadow-none" Elevation="0">
+            @* Icon & Header *@
+            <div class="text-center mb-8">
+                <div style="background: rgba(89, 74, 226, 0.1); width: 80px; height: 80px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center;" class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Rounded.AutoAwesome" Color="Color.Primary" Size="Size.Large" Style="font-size: 3rem;" />
+                </div>
+                <MudText Typo="Typo.h3" Class="fw-bold mb-2">Trendz PRO</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Dominasi pasar dengan data cerdas AI.</MudText>
+            </div>
+
+            @* Pricing *@
+            <div class="text-center mb-10">
+                <div class="d-flex align-center justify-center">
+                    <MudText Typo="Typo.h6" Class="mr-2 mt-n4" Color="Color.Secondary">Rp</MudText>
+                    <span class="price-tag">99k</span>
+                    <MudText Typo="Typo.h6" Class="ml-2 mt-4" Color="Color.Secondary">/bulan</MudText>
+                </div>
+                <MudText Typo="Typo.caption" Style="letter-spacing: 1px; text-transform: uppercase;">Akses Tak Terbatas</MudText>
+            </div>
+
+            @* Feature List *@
+            <div class="mb-10">
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Rounded.Verified" Color="Color.Success" Class="mr-3" />
+                    <MudText Typo="Typo.body2" Class="fw-bold">Strategi Konten Berbasis AI</MudText>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Rounded.RemoveRedEye" Color="Color.Success" Class="mr-3" />
+                    <MudText Typo="Typo.body2" Class="fw-bold">Watchlist Kompetitor Real-time</MudText>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Rounded.Assessment" Color="Color.Success" Class="mr-3" />
+                    <MudText Typo="Typo.body2" Class="fw-bold">Laporan Strategis & Ekspor PDF</MudText>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Rounded.Bolt" Color="Color.Success" Class="mr-3" />
+                    <MudText Typo="Typo.body2" Class="fw-bold">Notifikasi Tren Tercepat</MudText>
+                </div>
+            </div>
+
+            @* Action Buttons *@
+            <MudStack Spacing="3">
+                <MudButton Variant="Variant.Filled"
+                           Class="glow-btn-premium py-4"
+                           OnClick="ProcessUpgrade"
+                           Disabled="@_isProcessing">
+                    @if (_isProcessing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Memproses...</span>
+                    }
+                    else
+                    {
+                        <span>Aktivasi Premium Sekarang</span>
+                    }
+                </MudButton>
+
+                <MudButton Variant="Variant.Text"
+                           OnClick="@(() => NavManager.NavigateTo("/dashboard"))"
+                           Style="text-transform: none; color: var(--mud-palette-text-secondary);">
+                    Kembali ke Dashboard (Free Plan)
+                </MudButton>
+            </MudStack>
+
+            <div class="text-center mt-8">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    <MudIcon Icon="@Icons.Material.Rounded.Https" Size="Size.Small" Style="vertical-align: middle; margin-right: 4px;" />
+                    Pembayaran aman & terenkripsi
+                </MudText>
+            </div>
+        </MudPaper>
+    </MudContainer>
+</div>
 
 @code {
+    private bool _isProcessing = false;
+
     private async Task ProcessUpgrade()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var userEmail = authState.User.Identity?.Name ?? "User";
+        _isProcessing = true;
+        StateHasChanged();
 
-        // 1. Update di Database (Tetap wajib agar permanen)
-        await Repo.UpdateUserSubscriptionAsync(userEmail, "Premium");
-
-        // 2. Update State Provider (Agar UI Langsung Berubah)
-        if (AuthProvider is CustomAuthStateProvider customProvider)
+        try
         {
-            customProvider.UpdateSubscriptionStatus(userEmail, "Premium");
-            Snackbar.Add("Sukses! Anda sekarang member Premium.", Severity.Success);
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var userEmail = authState.User.Identity?.Name ?? "User";
 
-            await Task.Delay(1000);
-            NavManager.NavigateTo("/dashboard");
+            // 1. Simpan ke Repo
+            await Repo.UpdateUserSubscriptionAsync(userEmail, "Premium");
 
-        // ... setelah proses update database sukses
-        int userId = 1; // Sesuaikan dengan UserId yang login
-        await Repo.AddNotificationAsync(userId, "Akun Premium Aktif", "Selamat! Anda sekarang memiliki akses penuh ke fitur Strategist Tools.");
+            // 2. Update Auth State
+            if (AuthProvider is CustomAuthStateProvider customProvider)
+            {
+                customProvider.UpdateSubscriptionStatus(userEmail, "Premium");
+
+                // Tambah Notifikasi
+                await Repo.AddNotificationAsync(1, "Premium Aktif!", "Selamat! Anda sekarang memiliki akses penuh ke fitur Trendz PRO.");
+
+                Snackbar.Add("Upgrade Berhasil! Selamat datang di PRO.", Severity.Success);
+
+                await Task.Delay(1500);
+                NavManager.NavigateTo("/dashboard");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal melakukan upgrade. Coba lagi nanti.", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
         }
     }
 }

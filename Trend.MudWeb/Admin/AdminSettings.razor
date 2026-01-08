@@ -1,0 +1,64 @@
+﻿@page "/admin/settings"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor             
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar   
+@attribute [Authorize(Roles = "Admin")]
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-6">Admin Control Panel</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Konfigurasi Scraper</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudNumericField @bind-Value="_interval" 
+                                     Label="Interval Scraping (Jam)" 
+                                     Variant="Variant.Outlined" 
+                                     Min="1" Max="168"
+                                     HelperText="Berapa jam sekali sistem akan mengambil data baru" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               OnClick="SaveSettings">Simpan Perubahan</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<MudTextField @bind-Value="_targetHashtag" Label="Hashtag Target Scrape" Variant="Variant.Outlined" Class="mt-4" />
+<MudButton OnClick="SaveHashtag" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-2">Update Hashtag</MudButton>
+
+@code {
+    private string _targetHashtag = "skincare";
+
+    private async Task SaveHashtag()
+    {
+        await Repo.UpdateSettingAsync("TargetHashtag", _targetHashtag);
+        Snackbar.Add("Hashtag target berhasil diperbarui!", Severity.Success);
+    }
+}
+
+@code {
+    private int _interval = 24;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Ambil data dari DB saat halaman dibuka
+        var val = await Repo.GetSettingAsync("ScrapingIntervalHours");
+        if (int.TryParse(val, out var res)) _interval = res;
+    }
+
+    private async Task SaveSettings()
+    {
+        await Repo.UpdateSettingAsync("ScrapingIntervalHours", _interval.ToString());
+        Snackbar.Add("Pengaturan berhasil disimpan!", Severity.Success);
+    }
+}

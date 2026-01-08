@@ -6,50 +6,147 @@
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthProvider
 
-<PageTitle>Notifikasi Tren - Trendz</PageTitle>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudStack Direction="Row" AlignItems="AlignItems.Center" Class="mb-6">
-        <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Primary" Size="Size.Large" />
-        <div>
-            <MudText Typo="Typo.h4" Class="fw-bold">Notifikasi</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Update terbaru mengenai tren viral dan aktivitas akun Anda.</MudText>
-        </div>
+    .notif-container {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .notif-card {
+        background: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 16px !important;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+        .notif-card.unread {
+            background: rgba(var(--mud-palette-primary-rgb), 0.02);
+            border-left: 4px solid var(--mud-palette-primary) !important;
+        }
+
+        .notif-card:hover {
+            background: var(--mud-palette-background-grey);
+        }
+
+    .unread-dot {
+        height: 8px;
+        width: 8px;
+        background-color: var(--mud-palette-primary);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .notif-icon-wrapper {
+        height: 40px;
+        width: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(var(--mud-palette-primary-rgb), 0.1);
+        color: var(--mud-palette-primary);
+    }
+</style>
+
+<PageTitle>Pusat Notifikasi - Trendz</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="notif-container mt-10 mb-16">
+    @* --- HEADER --- *@
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Class="fw-bold">Pusat Notifikasi</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Tetap terhubung dengan tren terbaru.</MudText>
+        </MudStack>
+
+        @if (_dbNotifications?.Any(n => !(n.IsRead ?? false)) ?? false)
+        {
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Rounded.DoneAll"
+                       OnClick="MarkAllAsRead"
+                       Style="text-transform: none; font-weight: 600;">
+                Tandai Semua Dibaca
+            </MudButton>
+        }
     </MudStack>
 
-    @if (_dbNotifications == null || !_dbNotifications.Any())
+    @if (_dbNotifications == null)
     {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
-            Belum ada notifikasi baru untuk saat ini.
-        </MudAlert>
+        <MudStack Spacing="3">
+            @for (int i = 0; i < 4; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="80px" Class="rounded-xl" />
+            }
+        </MudStack>
+    }
+    else if (!_dbNotifications.Any())
+    {
+        <div class="text-center py-16">
+            <div class="d-flex justify-center mb-4">
+                <div style="background: var(--mud-palette-background-grey); padding: 24px; border-radius: 50%;">
+                    <MudIcon Icon="@Icons.Material.TwoTone.NotificationsNone" Style="font-size: 4rem; opacity: 0.3;" />
+                </div>
+            </div>
+            <MudText Typo="Typo.h6" Class="fw-bold">Semua Bersih!</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Anda belum memiliki notifikasi saat ini.</MudText>
+        </div>
     }
     else
     {
         <MudStack Spacing="3">
             @foreach (var note in _dbNotifications)
             {
-                @* PERBAIKAN: Gunakan ?? false untuk konversi bool? ke bool *@
-                <MudPaper Class="pa-4 rounded-lg" Elevation="2" Style="@(!(note.IsRead ?? false) ? "border-left: 4px solid var(--mud-palette-primary);" : "")">
-                    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <MudStack Spacing="1">
-                            @* PERBAIKAN: Gunakan ?? false *@
-                            <MudText Typo="Typo.body1" Class="@(!(note.IsRead ?? false) ? "fw-bold" : "")">
-                                @note.Message
-                            </MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
-                                @* PERBAIKAN: Jika CreatedAt adalah string di DB, hapus parameter ToString *@
-                                @note.CreatedAt
-                            </MudText>
-                        </MudStack>
+                bool isUnread = !(note.IsRead ?? false);
 
-                        @* PERBAIKAN: Gunakan ?? false *@
-                        @if (!(note.IsRead ?? false))
-                        {
-                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="@(() => MarkAsRead(note))">
-                                Tandai Dibaca
-                            </MudButton>
-                        }
+                <MudPaper Class="@($"pa-4 notif-card shadow-none {(isUnread ? "unread" : "")}")"
+                          Elevation="0">
+                    <MudStack Direction="Row" AlignItems="AlignItems.Start" Spacing="4">
+                        <div class="notif-icon-wrapper">
+                            <MudIcon Icon="@(isUnread? Icons.Material.Rounded.NotificationsActive : Icons.Material.Rounded.Notifications)" Size="Size.Small" />
+                        </div>
+
+                        <div style="flex-grow: 1;">
+                            <div class="d-flex align-center justify-space-between mb-1">
+                                <div class="d-flex align-center">
+                                    @if (isUnread)
+                                    {
+                                        <span class="unread-dot"></span>
+                                    }
+                                    <MudText Typo="Typo.body1" Class="@(isUnread ? "fw-bold" : "")" Style="font-size: 0.95rem;">
+                                        @note.Message
+                                    </MudText>
+                                </div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-4">
+                                    @note.CreatedAt
+                                </MudText>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between mt-2">
+                                <div class="d-flex gap-2">
+                                    @* Badge kategori sederhana berdasarkan isi pesan *@
+                                    @if (note.Message.Contains("Viral", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text" Class="px-2 py-0" Style="font-size: 10px; font-weight: 800;">HOT TREND</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="px-2 py-0" Style="font-size: 10px; font-weight: 800;">SYSTEM</MudChip>
+                                    }
+                                </div>
+
+                                @if (isUnread)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Rounded.CheckCircleOutline"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => MarkAsRead(note))"
+                                                   Title="Tandai telah dibaca" />
+                                }
+                            </div>
+                        </div>
                     </MudStack>
                 </MudPaper>
             }
@@ -58,7 +155,7 @@
 </MudContainer>
 
 @code {
-    private List<Trend.MudWeb.Models.Notifications> _dbNotifications = new();
+    private List<Trend.MudWeb.Models.Notifications>? _dbNotifications;
 
     protected override async Task OnInitializedAsync()
     {
@@ -69,7 +166,6 @@
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
         var userIdClaim = user.FindFirst("UserId")?.Value;
         int userId = string.IsNullOrEmpty(userIdClaim) ? 1 : int.Parse(userIdClaim);
 
@@ -79,10 +175,23 @@
     private async Task MarkAsRead(Trend.MudWeb.Models.Notifications note)
     {
         note.IsRead = true;
-        // Jika Anda punya method di repo untuk simpan status ke DB:
         // await Repo.MarkNotificationAsReadAsync(note.NotificationId);
 
-        Snackbar.Add("Notifikasi ditandai sebagai dibaca", Severity.Success);
+        Snackbar.Add("Ditandai sebagai dibaca", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        if (_dbNotifications == null) return;
+
+        foreach (var note in _dbNotifications.Where(n => !(n.IsRead ?? false)))
+        {
+            note.IsRead = true;
+            // await Repo.MarkNotificationAsReadAsync(note.NotificationId);
+        }
+
+        Snackbar.Add("Semua notifikasi telah dibaca", Severity.Info);
         StateHasChanged();
     }
 }
