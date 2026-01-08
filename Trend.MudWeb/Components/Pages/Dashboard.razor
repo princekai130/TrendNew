@@ -10,156 +10,176 @@
 @using MudBlazor
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@400;700&family=Outfit:wght@300;400;600&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
-    .gt-wrapper {
+    .dashboard-wrapper {
         font-family: 'Outfit', sans-serif;
         background-color: var(--mud-palette-background);
-        min-height: 100vh;
-        color: var(--mud-palette-text-primary);
+        padding-bottom: 50px;
     }
 
-    /* Header ala Google Trends */
-    .gt-header {
-        border-bottom: 1px solid var(--mud-palette-divider);
-        background: var(--mud-palette-surface);
-        padding: 24px 0;
-    }
-
-    .gt-card {
+    /* AI Highlight Card */
+    .ai-spotlight {
+        background: linear-gradient(135deg, var(--mud-palette-surface) 0%, rgba(89, 74, 226, 0.08) 100%);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 8px; /* Google cenderung kotak tapi lembut */
+        border-radius: 28px;
+        position: relative;
+    }
+
+    .trend-bento-card {
         background: var(--mud-palette-surface);
-        transition: box-shadow 0.2s ease-in-out;
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 20px;
+        transition: all 0.3s ease;
     }
 
-        .gt-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-    /* Sparkline sederhana */
-    .gt-sparkline {
-        height: 60px;
-        width: 100%;
-        background-image: linear-gradient(to right, transparent 0%, var(--mud-palette-primary) 50%, transparent 100%);
-        opacity: 0.1;
-        mask-image: linear-gradient(to top, black, transparent);
+    /* Perbaikan kontras teks platform */
+    .platform-tag {
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
     }
 
-    .gt-rank {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--mud-palette-primary);
-        opacity: 0.5;
-        width: 40px;
+    .tiktok-tag {
+        background: rgba(var(--mud-palette-text-primary-rgb), 0.1);
+        color: var(--mud-palette-text-primary); /* Mengikuti tema dark/light */
     }
 
-    .gt-chip {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: rgba(var(--mud-palette-primary-rgb), 0.1);
-        color: var(--mud-palette-primary);
+    .ig-tag {
+        background: rgba(225, 48, 108, 0.1);
+        color: #E1306C;
+    }
+
+    .hashtag-chip {
+        background: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
+        color: var(--mud-palette-primary) !important;
+        font-weight: 600 !important;
+        border: 1px solid rgba(var(--mud-palette-primary-rgb), 0.2) !important;
+    }
+
+    .report-btn-custom {
+        background-color: #FFFFFF !important; /* Putih bersih agar kontras di BG Ungu */
+        color: var(--mud-palette-primary) !important;
+        font-weight: 800 !important;
+        border-radius: 14px !important;
     }
 </style>
 
-<div class="gt-wrapper">
-    <div class="gt-header mb-8">
-        <MudContainer MaxWidth="MaxWidth.Large">
-            <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                <MudStack Spacing="0">
-                    <div class="d-flex align-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="mr-2">
-                            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--mud-palette-primary)" />
-                        </svg>
-                        <MudText Typo="Typo.h5" Style="font-family: 'Product Sans', sans-serif; font-weight: 400;">Trendz <span style="font-weight: 700;">Market Pulse</span></MudText>
-                    </div>
-                </MudStack>
-                <MudStack Direction="Row" Spacing="2">
-                    <MudButton OnClick="RefreshTrends" Variant="Variant.Outlined" Color="Color.Primary" Class="rounded-pill px-6" Disabled="@_isSyncing">
-                        @(_isSyncing ? "Menyinkronkan..." : "Update Sekarang")
-                    </MudButton>
-                </MudStack>
+<div class="dashboard-wrapper">
+    @* --- HEADER --- *@
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-6">
+        <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h4" Class="fw-bold" Style="letter-spacing: -1.5px;">Market Intelligence</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Analisis real-time berdasarkan momentum pasar terbaru.</MudText>
             </MudStack>
-        </MudContainer>
-    </div>
+            <MudButton OnClick="RefreshTrends" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Rounded.Sync" Class="rounded-xl px-6 py-2 shadow-none" Disabled="@_isSyncing">
+                @(_isSyncing ? "Menyinkronkan..." : "Sinkronisasi")
+            </MudButton>
+        </MudStack>
+    </MudContainer>
 
     <MudContainer MaxWidth="MaxWidth.Large">
-        <MudText Typo="Typo.h6" Class="mb-4 fw-bold">Analisis AI Terbaru</MudText>
-        <MudPaper Class="pa-6 gt-card shadow-none mb-10" Style="border-left: 6px solid var(--mud-palette-primary);">
-            <MudGrid>
-                <MudItem xs="12" md="8">
-                    <div class="d-flex align-center mb-3">
-                        <span class="gt-chip mr-2">TOP PREDICTION</span>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Diperbarui @ReportService.generatedAt.ToString("HH:mm")</MudText>
-                    </div>
-                    <MudText Typo="Typo.h4" Class="fw-bold mb-3">@(_topTrend?.TrendName ?? "Menganalisis...")</MudText>
-                    <MudText Typo="Typo.body1" Style="color: var(--mud-palette-text-secondary); line-height: 1.7;">
-                        "@_analysisResult"
-                    </MudText>
-                </MudItem>
-                <MudItem xs="12" md="4" Class="d-flex flex-column align-center justify-center border-left border-dashed">
-                    <MudText Typo="Typo.h2" Color="Color.Primary" Class="fw-bold">@_topTrend?.GrowthScore%</MudText>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">MOMENTUM SCORE</MudText>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
-
-        <div class="d-flex align-center justify-space-between mb-4">
-            <MudText Typo="Typo.h6" Class="fw-bold">Topik yang Sedang Tren</MudText>
-            <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward">Lihat Semua</MudButton>
-        </div>
-
-        <MudGrid Class="mb-10">
-            @foreach (var (item, index) in _trends.Take(6).Select((value, i) => (value, i)))
-            {
-                <MudItem xs="12" md="4">
-                    <MudPaper Class="pa-5 gt-card shadow-none d-flex flex-column h-100">
-                        <div class="d-flex justify-space-between align-start mb-4">
-                            <span class="gt-rank">@(index + 1)</span>
-                            <MudIcon Icon="@(item.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)" Size="Size.Small" Color="Color.Secondary" />
-                        </div>
-                        <MudText Typo="Typo.h6" Class="fw-bold mb-1">@item.TrendName</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">Eksplorasi di @item.Platform</MudText>
-
-                        <div class="mt-auto">
-                            <div class="gt-sparkline mb-2"></div>
-                            <div class="d-flex justify-space-between align-center">
-                                <MudText Typo="Typo.caption" Style="font-weight: 700;">+@item.GrowthScore%</MudText>
-                                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Small" />
-                            </div>
-                        </div>
-                    </MudPaper>
-                </MudItem>
-            }
-        </MudGrid>
-
         <MudGrid>
-            <MudItem xs="12" md="7">
-                <MudText Typo="Typo.h6" Class="mb-4 fw-bold">Ketertarikan Berdasarkan Akun</MudText>
-                <MudPaper Class="gt-card shadow-none overflow-hidden">
-                    @foreach (var comp in _competitorAlerts.Take(5))
+            @* --- AI SPOTLIGHT + MINI CHART --- *@
+            <MudItem xs="12">
+                <MudPaper Class="pa-8 ai-spotlight shadow-none" Elevation="0">
+                    <MudGrid AlignItems="AlignItems.Center">
+                        <MudItem xs="12" md="7">
+                            <MudStack Spacing="2">
+                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.Rounded.AutoAwesome" Class="fw-bold pa-0">AI INSIGHT</MudChip>
+                                <MudText Typo="Typo.h3" Class="fw-bold mt-2">@(_topTrend?.TrendName ?? "Menganalisis...")</MudText>
+                                <MudText Typo="Typo.body1" Style="opacity: 0.8; line-height: 1.8;">
+                                    "@_analysisResult"
+                                </MudText>
+
+                                @* HASHTAG RECOMMENDATIONS *@
+                                <div class="d-flex flex-wrap gap-2 mt-4">
+                                    <MudChip T="string" Size="Size.Small" Class="hashtag-chip">#FYP</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Class="hashtag-chip">#Trending2024</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Class="hashtag-chip">#@(_topTrend?.TrendName.Replace(" ", ""))</MudChip>
+                                </div>
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="5">
+                            @* MINI GROWTH CHART *@
+                            <MudPaper Class="pa-4 rounded-xl shadow-none" Style="background: rgba(var(--mud-palette-primary-rgb), 0.05); border: 1px dashed var(--mud-palette-primary);">
+                                <MudText Typo="Typo.caption" Class="fw-bold mb-2 d-block">WEEKLY MOMENTUM</MudText>
+                                <MudChart ChartType="ChartType.Line"
+                                          ChartSeries="@_series"
+                                          XAxisLabels="@_xAxisLabels"
+                                          Width="100%"
+                                          Height="120px"
+                                          ChartOptions="@_chartOptions" />
+                                <div class="text-center mt-2">
+                                    <MudText Typo="Typo.h4" Color="Color.Primary" Class="fw-bold">@_topTrend?.GrowthScore%</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Confidence Score</MudText>
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            @* --- RISING TRENDS --- *@
+            <MudItem xs="12" Class="mt-6">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Rising Trends</MudText>
+                <MudGrid Spacing="3">
+                    @foreach (var (item, index) in _trends.Take(3).Select((value, i) => (value, i)))
                     {
-                        <div class="pa-4 d-flex align-center border-bottom">
-                            <MudAvatar Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="mr-4">@comp.Username[0]</MudAvatar>
-                            <div class="flex-grow-1">
+                        <MudItem xs="12" md="4">
+                            <MudPaper Class="pa-6 trend-bento-card shadow-none">
+                                <div class="d-flex justify-space-between align-center mb-6">
+                                    <div class="platform-tag @(item.Platform == "TikTok" ? "tiktok-tag" : "ig-tag")">
+                                        @item.Platform
+                                    </div>
+                                    <MudIcon Icon="@(item.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)" Size="Size.Small" Opacity="0.5" />
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@item.TrendName</MudText>
+                                <div class="d-flex align-end justify-space-between mt-4">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">VELOCITY</MudText>
+                                        <MudText Typo="Typo.h5" Color="Color.Success" Class="fw-bold">+@item.GrowthScore%</MudText>
+                                    </MudStack>
+                                    <MudIcon Icon="@Icons.Material.Rounded.AutoGraph" Color="Color.Success" />
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudItem>
+
+            @* --- MONITORING & REPORT --- *@
+            <MudItem xs="12" md="7" Class="mt-6">
+                <MudPaper Class="pa-6 trend-bento-card shadow-none h-100">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Competitor Insight</MudText>
+                    @foreach (var comp in _competitorAlerts.Take(3))
+                    {
+                        <div class="d-flex align-center mb-4 pa-3 rounded-lg" style="background: var(--mud-palette-background-grey)">
+                            <MudAvatar Color="Color.Primary" Size="Size.Small">@comp.Username[0]</MudAvatar>
+                            <div class="ml-4 flex-grow-1">
                                 <MudText Typo="Typo.body2" Class="fw-bold">@@@comp.Username</MudText>
-                                <MudProgressLinear Color="Color.Primary" Value="@(new Random().Next(40, 95))" Class="mt-1" Style="height: 4px; border-radius: 2px;" />
+                                <MudProgressLinear Color="Color.Primary" Value="@(new Random().Next(70, 95))" Height="4" Class="rounded-pill" />
                             </div>
-                            <MudText Typo="Typo.caption" Class="ml-4" Style="width: 50px;">High</MudText>
                         </div>
                     }
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" md="5">
-                <MudText Typo="Typo.h6" Class="mb-4 fw-bold">Ringkasan Laporan</MudText>
-                <MudPaper Class="pa-6 gt-card shadow-none d-flex flex-column" Style="background-color: var(--mud-palette-background-grey);">
-                    <MudText Typo="Typo.body2" Class="mb-2">Laporan ID: <b>#@ReportService.reportId</b></MudText>
-                    <MudText Typo="Typo.body2" Class="mb-6">Data ini dikumpulkan secara otomatis melalui integrasi API TikTok & Instagram.</MudText>
-                    <MudButton Href="/MarketReport" Variant="Variant.Filled" Color="Color.Dark" Class="rounded-pill shadow-none py-2" Style="text-transform: none;">
-                        Lihat Detail Laporan
+            <MudItem xs="12" md="5" Class="mt-6">
+                <MudPaper Class="pa-8 trend-bento-card shadow-none h-100 d-flex flex-column justify-center" Style="background: var(--mud-palette-primary); color: white;">
+                    <MudText Typo="Typo.h5" Class="fw-bold mb-2">Strategy Report</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;" Class="mb-8">
+                        Laporan mingguan #@ReportService.reportId mencakup strategi distribusi konten untuk niche @_topTrend?.TrendName.
+                    </MudText>
+                    <MudButton Href="/MarketReport"
+                               Variant="Variant.Filled"
+                               Class="report-btn-custom py-4"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Rounded.Description">
+                        Buka Laporan Penuh
                     </MudButton>
                 </MudPaper>
             </MudItem>
@@ -168,10 +188,21 @@
 </div>
 
 @code {
-    // Logic tetap sama
-}
 
-@code {
+    // DATA UNTUK MINI CHART
+    private List<ChartSeries> _series = new()
+    {
+        new ChartSeries() { Name = "Momentum", Data = new double[] { 10, 25, 45, 30, 60, 85, 90 } }
+    };
+    private string[] _xAxisLabels = { "Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab" };
+
+    private ChartOptions _chartOptions = new ChartOptions()
+    {
+        ShowLegend = false, // Ini cara yang benar untuk menghilangkan legenda
+        YAxisLines = false, // Menghilangkan garis background agar lebih bersih (opsional)
+        LineStrokeWidth = 3
+    };
+
     private bool _isSyncing = false;
     private bool _isLoading = true;
     private List<SocialTrend> _trends = new();

@@ -1,163 +1,137 @@
 ﻿@page "/TheHotList"
 @using Microsoft.AspNetCore.Authorization
-@using Trend.MudWeb.Models
-@using Trend.MudWeb.Services
-@inject TrendRepo Repo
 @attribute [Authorize(Policy = "PremiumOnly")]
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=JetBrains+Mono:wght@700&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
 
     .hotlist-container {
         font-family: 'Outfit', sans-serif;
     }
 
-    .hot-card {
+    .recipe-card {
         background: var(--mud-palette-surface);
-        border: 1px solid rgba(255, 64, 129, 0.2);
-        border-radius: 24px !important;
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 24px;
+        transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-        .hot-card:hover {
+        .recipe-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 15px 30px -10px rgba(244, 67, 54, 0.3);
-            border-color: var(--mud-palette-error);
+            border-color: var(--mud-palette-primary);
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
         }
 
-    /* Angka urutan di background */
-    .rank-bg {
-        position: absolute;
-        top: -10px;
-        right: 10px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 5rem;
-        font-weight: 800;
-        color: var(--mud-palette-error);
-        opacity: 0.05;
-        z-index: 0;
-        user-select: none;
-    }
-
-    .fire-gradient-btn {
-        background: linear-gradient(90deg, #FF416C 0%, #FF4B2B 100%) !important;
+    .ai-magic-btn {
+        background: linear-gradient(90deg, #594AE2 0%, #FF4081 100%) !important;
         color: white !important;
-        border-radius: 14px !important;
         font-weight: 700 !important;
+        border-radius: 12px !important;
         text-transform: none !important;
-        box-shadow: 0 4px 15px rgba(255, 75, 43, 0.3) !important;
     }
 
-    .heat-indicator {
-        width: 100%;
-        height: 6px;
-        background: var(--mud-palette-divider);
-        border-radius: 10px;
-        overflow: hidden;
-        margin: 12px 0;
-    }
-
-    .heat-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #ff9800, #f44336);
-        border-radius: 10px;
-    }
-
-    .platform-badge {
-        background: rgba(var(--mud-palette-text-primary-rgb), 0.05);
-        padding: 4px 10px;
+    .viral-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 64, 129, 0.1);
+        color: #FF4081;
+        padding: 4px 12px;
         border-radius: 8px;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: 0.7rem;
+        font-weight: 800;
     }
 </style>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="hotlist-container mt-10">
-    @* HEADER SECTION *@
-    <div class="d-flex align-center justify-space-between mb-10">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
-            <div style="background: rgba(244, 67, 54, 0.1); padding: 16px; border-radius: 20px;">
-                <MudIcon Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error" Size="Size.Large" />
-            </div>
-            <div>
-                <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List</MudText>
-                <MudText Typo="Typo.body1" Color="Color.Secondary">Tren eksplosif yang mendominasi niche Anda saat ini.</MudText>
-            </div>
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List 🔥</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Resep konten siap saji berdasarkan tren dengan momentum tertinggi.</MudText>
         </MudStack>
+        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.AutoAwesome">Premium Access</MudChip>
+    </MudStack>
 
-        <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <MudChip T="string" Icon="@Icons.Material.Filled.Update" Color="Color.Error" Variant="Variant.Outlined">Real-time Updates</MudChip>
-        </MudHidden>
-    </div>
+    <MudGrid>
+        @foreach (var trend in _hotTrends)
+        {
+            <MudItem xs="12" md="6" lg="4">
+                <MudPaper Class="pa-6 recipe-card shadow-none">
+                    <div class="viral-badge">HIGH POTENTIAL</div>
 
-    @if (_hotTrends == null)
-    {
-        <MudGrid>
-            @for (int i = 0; i < 6; i++)
-            {
-                <MudItem xs="12" sm="6" md="4"><MudSkeleton Height="280px" Class="rounded-xl" /></MudItem>
-            }
-        </MudGrid>
-    }
-    else if (!_hotTrends.Any())
-    {
-        <MudPaper Class="pa-12 rounded-xl text-center" Style="border: 2px dashed var(--mud-palette-divider); background: transparent;">
-            <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" Color="Color.Default" Class="mb-4" />
-            <MudText Typo="Typo.h5" Class="fw-bold">Hening di Sini...</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Belum ada ledakan tren baru. Coba segarkan dashboard beberapa saat lagi.</MudText>
-        </MudPaper>
-    }
-    else
-    {
-        <MudGrid>
-            @foreach (var (trend, index) in _hotTrends.Select((value, i) => (value, i)))
-            {
-                <MudItem xs="12" sm="6" md="4">
-                    <MudPaper Class="pa-6 hot-card shadow-none" Elevation="0">
-                        <div class="rank-bg">@(index + 1 < 10 ? "0" + (index + 1) : index + 1)</div>
-
-                        <div class="d-flex justify-space-between align-center mb-6" style="position: relative; z-index: 1;">
-                            <div class="platform-badge">@trend.Platform</div>
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Bolt" Class="fw-bold">
-                                +@trend.GrowthScore%
-                            </MudChip>
+                    <MudStack Spacing="4">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Custom.Brands.TikTok" Size="Size.Small" Class="mr-2" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">TIKTOK TREND</MudText>
                         </div>
 
-                        <div style="height: 80px; position: relative; z-index: 1;">
-                            <MudText Typo="Typo.h5" Class="fw-bold mb-1" Style="line-height: 1.2;">@trend.TrendName</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Terdeteksi @(new Random().Next(5, 59)) menit yang lalu</MudText>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@trend.Name</MudText>
+
+                        <div class="d-flex gap-2">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Speed" Color="Color.Info">Mudah</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary">Low Comp</MudChip>
                         </div>
 
-                        <div style="position: relative; z-index: 1;">
-                            <div class="d-flex justify-space-between align-end mb-1">
-                                <MudText Typo="Typo.caption" Class="fw-bold">VIRAL INTENSITY</MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Error" Class="fw-bold">@((trend.GrowthScore > 80) ? "EXTREME" : "HIGH")</MudText>
-                            </div>
-                            <div class="heat-indicator">
-                                <div class="heat-fill" style="width: @(Math.Min(100, trend.GrowthScore ?? 0).ToString())%"></div>
-                            </div>
+                        <MudDivider Style="opacity: 0.1;" />
+
+                        <div class="d-flex align-center justify-space-between">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">AI Content Idea</MudText>
+                            <MudIconButton Icon="@Icons.Material.Rounded.AutoAwesome"
+                                           Class="ai-magic-btn"
+                                           Size="Size.Small"
+                                           OnClick="@(() => GenerateAIIdeas(trend.Name))" />
                         </div>
 
-                        <MudButton Variant="Variant.Filled"
-                                   FullWidth="true"
-                                   Class="fire-gradient-btn mt-6 py-3"
-                                   StartIcon="@Icons.Material.Filled.AutoAwesome">
-                            Generate Ide Konten
-                        </MudButton>
-                    </MudPaper>
-                </MudItem>
-            }
-        </MudGrid>
-    }
+                        @if (_isGenerating && _selectedTrend == trend.Name)
+                        {
+                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="rounded-pill" />
+                        }
+                        else if (!string.IsNullOrEmpty(trend.GeneratedIdea) && _selectedTrend == trend.Name)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-2" Style="border-radius: 12px; font-size: 0.85rem;">
+                                <b>Hook:</b> @trend.GeneratedIdea
+                            </MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
 </MudContainer>
 
 @code {
-    private List<SocialTrend>? _hotTrends;
+    private bool _isGenerating = false;
+    private string _selectedTrend = "";
 
-    protected override async Task OnInitializedAsync()
+    private List<HotTrendItem> _hotTrends = new()
     {
-        _hotTrends = await Repo.GetHotListTrendsAsync();
+        new HotTrendItem { Name = "AI Avatar Dance", Platform = "TikTok" },
+        new HotTrendItem { Name = "POV: Working in Tech", Platform = "Instagram" },
+        new HotTrendItem { Name = "Minimalist Desk Setup", Platform = "TikTok" }
+    };
+
+    private async Task GenerateAIIdeas(string trendName)
+    {
+        _selectedTrend = trendName;
+        _isGenerating = true;
+        StateHasChanged();
+
+        // SIMULASI PANGGIL AI (Nanti di sini panggil OpenAI API)
+        await Task.Delay(2000);
+
+        var trend = _hotTrends.First(t => t.Name == trendName);
+        trend.GeneratedIdea = "Tunjukkan transisi cepat antara layar coding yang berantakan ke hasil desain yang estetik dengan sound 'Magic'!";
+
+        _isGenerating = false;
+        StateHasChanged();
+    }
+
+    public class HotTrendItem
+    {
+        public string Name { get; set; }
+        public string Platform { get; set; }
+        public string GeneratedIdea { get; set; }
     }
 }
