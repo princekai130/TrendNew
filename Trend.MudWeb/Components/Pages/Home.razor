@@ -5,218 +5,275 @@
 <PageTitle>Trendz - Dominate Your Social Media Niche</PageTitle>
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;800&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
 
     .landing-wrapper {
         font-family: 'Outfit', sans-serif;
         overflow-x: hidden;
+        background-color: var(--mud-palette-background);
+    }
+
+    /* Typography Hero */
+    .hero-title {
+        line-height: 1.05;
+        font-size: clamp(2.5rem, 8vw, 4.5rem);
+        letter-spacing: -3px;
+        font-weight: 800;
     }
 
     .hero-gradient-text {
-        background: linear-gradient(90deg, var(--mud-palette-primary) 0%, #FF4081 100%);
+        background: linear-gradient(90deg, #594AE2 0%, #FF4081 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        display: inline-block;
     }
 
-    /* Efek Floating Card yang lebih halus */
-    .glass-card {
+    /* Glassmorphism Cards */
+    .glass-card-lp {
         background: var(--mud-palette-surface);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 24px !important;
+        border-radius: 32px !important;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-        .glass-card:hover {
+        .glass-card-lp:hover {
             transform: translateY(-12px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             border-color: var(--mud-palette-primary);
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.15);
         }
 
-    /* Background Mesh Decoration */
-    .mesh-gradient {
+    /* Decorative Elements */
+    .mesh-blob {
         position: absolute;
-        top: -10%;
-        right: -5%;
         width: 600px;
         height: 600px;
-        background: radial-gradient(circle, rgba(89,74,226,0.12) 0%, rgba(255,64,129,0.05) 50%, transparent 70%);
+        background: radial-gradient(circle, rgba(89,74,226,0.15) 0%, transparent 70%);
+        top: -100px;
+        right: -150px;
         z-index: 0;
-        filter: blur(60px);
+        filter: blur(80px);
+        pointer-events: none;
     }
 
-    .pricing-card-premium {
+    .pricing-premium-lp {
         border: 2px solid var(--mud-palette-primary) !important;
-        background: rgba(var(--mud-palette-surface-rgb), 0.7);
-        backdrop-filter: blur(20px);
+        position: relative;
     }
 
-    .feature-icon-container {
-        background: rgba(var(--mud-palette-primary-rgb), 0.1);
-        border-radius: 16px;
-        padding: 16px;
-        display: inline-flex;
+    .feature-icon-box {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         margin-bottom: 24px;
     }
 
-    .stat-divider {
-        height: 40px;
-        width: 1px;
-        background: var(--mud-palette-divider);
+    .btn-hero-primary {
+        background: #000 !important;
+        color: white !important;
+        padding: 16px 40px !important;
+        border-radius: 18px !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        font-size: 1.1rem !important;
+    }
+
+    .dark .btn-hero-primary {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    .floating-stats {
+        border-top: 1px solid var(--mud-palette-divider);
+        border-bottom: 1px solid var(--mud-palette-divider);
+        padding: 40px 0;
     }
 </style>
 
 <div class="landing-wrapper">
-    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-16 pb-16 relative">
-        <div class="mesh-gradient"></div>
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-16 relative">
+        <div class="mesh-blob"></div>
 
         @* --- HERO SECTION --- *@
-        <MudGrid AlignItems="AlignItems.Center" Class="mb-16">
-            <MudItem xs="12" md="7" Class="animate__animated animate__fadeInUp">
-                <MudStack Spacing="3">
-                    <div class="d-flex align-center mb-2">
-                        <MudIcon Icon="@Icons.Material.Rounded.AutoGraph" Color="Color.Primary" Class="mr-2" />
-                        <MudText Typo="Typo.overline" Style="letter-spacing: 3px; font-weight: 800; color: var(--mud-palette-primary);">AI-DRIVEN INTELLIGENCE</MudText>
+        <MudGrid AlignItems="AlignItems.Center" Class="mb-16 pb-12">
+            <MudItem xs="12" md="7" Class="animate__animated animate__fadeInLeft">
+                <MudStack Spacing="4">
+                    <div class="d-flex align-center">
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Icon="@Icons.Material.Rounded.AutoAwesome" Class="fw-bold px-4">NEXT-GEN ANALYTICS</MudChip>
                     </div>
-                    <MudText Typo="Typo.h1" Class="fw-bold mb-4" Style="line-height: 1.1; font-size: 4rem; letter-spacing: -2px;">
-                        Kuasai Algoritma <br /> Lewat <span class="hero-gradient-text">Kecerdasan Data.</span>
+                    <MudText Typo="Typo.h1" Class="hero-title">
+                        Dominasi Niche <br /> Dengan <span class="hero-gradient-text">Data Viral.</span>
                     </MudText>
-                    <MudText Typo="Typo.h6" Class="mb-8" Style="color: var(--mud-palette-text-secondary); font-weight: 300; max-width: 550px; line-height: 1.6;">
-                        Trendz memantau jutaan konten setiap jamnya. Dapatkan pola viral yang telah divalidasi oleh AI untuk melejitkan engagement TikTok dan Instagram Anda.
+                    <MudText Typo="Typo.h6" Class="mt-4 mb-8" Style="color: var(--mud-palette-text-secondary); line-height: 1.6; max-width: 580px; font-weight: 400;">
+                        Trendz adalah intelijen media sosial yang membantu Anda menemukan tren TikTok & Instagram sebelum orang lain menyadarinya. Berhenti menebak, mulai memimpin.
                     </MudText>
+                    @* --- HERO BUTTONS (LOGIC AUTH) --- *@
+                    <AuthorizeView>
+                        <NotAuthorized>
+                            @* Hanya muncul jika user belum login *@
+                            <MudStack Direction="Row" Spacing="4" Class="mt-6">
+                                <MudButton Href="/register" Variant="Variant.Filled" Class="btn-hero-primary">Mulai Sekarang — Gratis</MudButton>
+                                <MudButton Href="/pricing" Variant="Variant.Outlined" Class="rounded-xl px-8" Style="text-transform:none; font-weight:700;">Lihat Paket</MudButton>
+                            </MudStack>
+                        </NotAuthorized>
+
+                        <Authorized>
+                            @* Muncul jika user sudah login *@
+                            <MudStack Direction="Row" Spacing="4" Class="mt-6">
+                                <MudButton Href="/dashboard"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Class="rounded-xl px-10 py-4 shadow-lg fw-bold"
+                                           Style="text-transform:none; font-size: 1.1rem;">
+                                    Buka Dashboard Saya
+                                </MudButton>
+                                <MudButton Href="/trendexplorer"
+                                           Variant="Variant.Text"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Rounded.Search"
+                                           Class="px-6 fw-bold"
+                                           Style="text-transform:none;">
+                                    Eksplor Tren
+                                </MudButton>
+                            </MudStack>
+                        </Authorized>
+                    </AuthorizeView>
                 </MudStack>
             </MudItem>
 
             <MudItem xs="12" md="5" Class="d-flex justify-center animate__animated animate__fadeInRight">
-                @* Preview Dashboard Mockup *@
-                <MudPaper Elevation="25" Class="pa-2 rounded-xl overflow-hidden shadow-2xl" Style="background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-divider); width: 100%;">
-                    <div class="pa-4 d-flex align-center" style="background: var(--mud-palette-background-grey)">
-                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Error" Size="Size.Small" Class="mr-1" />
-                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Warning" Size="Size.Small" Class="mr-1" />
-                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Success" Size="Size.Small" />
+                <MudPaper Elevation="0" Class="pa-4 glass-card-lp overflow-hidden shadow-2xl w-100" Style="background: rgba(var(--mud-palette-surface-rgb), 0.5); backdrop-filter: blur(10px);">
+                    <div class="d-flex align-center mb-6 pa-2 rounded-lg" style="background: var(--mud-palette-background-grey)">
+                        <div class="d-flex gap-2">
+                            <div style="width:10px; height:10px; border-radius:50%; background:#FF5F56"></div>
+                            <div style="width:10px; height:10px; border-radius:50%; background:#FFBD2E"></div>
+                            <div style="width:10px; height:10px; border-radius:50%; background:#27C93F"></div>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="ml-auto opacity-50 fw-bold">trendz_intel_v2.exe</MudText>
                     </div>
-                    <div class="pa-8">
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="rounded-lg mb-4" />
-                        <MudGrid>
-                            <MudItem xs="6"><MudSkeleton Height="40px" Class="rounded-lg" /></MudItem>
-                            <MudItem xs="6"><MudSkeleton Height="40px" Class="rounded-lg" /></MudItem>
-                        </MudGrid>
-                    </div>
+                    <MudStack Spacing="4">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="140px" Class="rounded-xl" />
+                        <div class="d-flex gap-4">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
+                            <MudStack Spacing="1" Class="flex-grow-1">
+                                <MudSkeleton Width="60%" Height="12px" />
+                                <MudSkeleton Width="90%" Height="12px" />
+                            </MudStack>
+                        </div>
+                        <MudProgressLinear Color="Color.Primary" Value="75" Class="rounded-pill" Height="10" />
+                    </MudStack>
                 </MudPaper>
             </MudItem>
         </MudGrid>
 
-        @* --- TRUST STATS --- *@
-        <MudPaper Class="pa-10 rounded-xl glass-card d-flex flex-wrap justify-space-around align-center mb-16 shadow-none">
-            <div class="text-center px-6">
-                <MudText Typo="Typo.h3" Color="Color.Primary" Class="fw-bold">24/7</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Auto Scraping</MudText>
+        @* --- STATS BAR --- *@
+        <div class="floating-stats d-flex flex-wrap justify-space-around align-center mb-16">
+            <div class="text-center px-8 py-4">
+                <MudText Typo="Typo.h3" Class="fw-bold" Color="Color.Primary">24/7</MudText>
+                <MudText Typo="Typo.overline" Style="letter-spacing:2px;">AI MONITORING</MudText>
             </div>
-            <div class="stat-divider d-none d-sm-block"></div>
-            <div class="text-center px-6">
-                <MudText Typo="Typo.h3" Color="Color.Primary" Class="fw-bold">10k+</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Daily Insights</MudText>
+            <div class="text-center px-8 py-4">
+                <MudText Typo="Typo.h3" Class="fw-bold" Color="Color.Primary">1.2M+</MudText>
+                <MudText Typo="Typo.overline" Style="letter-spacing:2px;">DATA PROCESSED</MudText>
             </div>
-            <div class="stat-divider d-none d-sm-block"></div>
-            <div class="text-center px-6">
-                <MudText Typo="Typo.h3" Color="Color.Primary" Class="fw-bold">94%</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Trend Precision</MudText>
+            <div class="text-center px-8 py-4">
+                <MudText Typo="Typo.h3" Class="fw-bold" Color="Color.Primary">98%</MudText>
+                <MudText Typo="Typo.overline" Style="letter-spacing:2px;">ACCURACY RATE</MudText>
             </div>
-        </MudPaper>
-
-        @* --- FEATURES SECTION --- *@
-        <div class="text-center mb-12">
-            <MudText Typo="Typo.h3" Class="fw-bold mb-4">Mengapa Trendz?</MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">Fitur yang dirancang khusus untuk pertumbuhan organik.</MudText>
         </div>
 
-        <MudGrid Class="mb-16">
+        @* --- FEATURES --- *@
+        <div class="text-center mb-16">
+            <MudText Typo="Typo.h3" Class="fw-bold mb-4" Style="letter-spacing:-1px;">Didesain Untuk Kreator Pro</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Style="max-width:600px; margin: 0 auto;">Fitur yang memberikan Anda keunggulan kompetitif yang tidak dimiliki orang lain.</MudText>
+        </div>
+
+        <MudGrid Spacing="6" Class="mb-16 pb-16">
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-8 glass-card h-100 shadow-none">
-                    <div class="feature-icon-container">
-                        <MudIcon Icon="@Icons.Material.Rounded.AutoFixHigh" Color="Color.Primary" Size="Size.Large" />
+                <MudPaper Class="pa-10 glass-card-lp h-100 shadow-none">
+                    <div class="feature-icon-box" style="background: rgba(89,74,226,0.1); color: #594AE2;">
+                        <MudIcon Icon="@Icons.Material.Rounded.AutoFixHigh" Size="Size.Large" />
                     </div>
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-3">Riset Otomatis</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Style="line-height: 1.7;">AI kami menyaring tren yang relevan dengan niche Anda, memberikan waktu luang untuk fokus pada kreativitas.</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold mb-3">AI Discovery</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="line-height: 1.7;">Sistem kami menyaring ribuan data dan hanya menyajikan tren yang memiliki probabilitas viral tertinggi.</MudText>
                 </MudPaper>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-8 glass-card h-100 shadow-none">
-                    <div class="feature-icon-container" style="background: rgba(255, 64, 129, 0.1);">
-                        <MudIcon Icon="@Icons.Material.Rounded.Bolt" Style="color: #FF4081;" Size="Size.Large" />
+                <MudPaper Class="pa-10 glass-card-lp h-100 shadow-none">
+                    <div class="feature-icon-box" style="background: rgba(255,64,129,0.1); color: #FF4081;">
+                        <MudIcon Icon="@Icons.Material.Rounded.Bolt" Size="Size.Large" />
                     </div>
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-3">Momentum Tracker</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Style="line-height: 1.7;">Dapatkan notifikasi instan saat sebuah topik mulai naik daun sebelum mencapai puncak kejenuhan.</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold mb-3">Momentum Tracker</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="line-height: 1.7;">Ketahui tren saat masih di tahap awal (Early Rising). Jangan posting saat tren sudah jenuh.</MudText>
                 </MudPaper>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-8 glass-card h-100 shadow-none">
-                    <div class="feature-icon-container" style="background: rgba(76, 175, 80, 0.1);">
-                        <MudIcon Icon="@Icons.Material.Rounded.Analytics" Style="color: #4CAF50;" Size="Size.Large" />
+                <MudPaper Class="pa-10 glass-card-lp h-100 shadow-none">
+                    <div class="feature-icon-box" style="background: rgba(76,175,80,0.1); color: #4CAF50;">
+                        <MudIcon Icon="@Icons.Material.Rounded.Insights" Size="Size.Large" />
                     </div>
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-3">Validated Data</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Style="line-height: 1.7;">Setiap tren dilengkapi dengan skor pertumbuhan dan validasi engagement rate yang transparan.</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold mb-3">Deep Analytics</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="line-height: 1.7;">Bukan sekadar hashtag. Kami memberikan data audio, engagement rate, hingga saran konten dari AI.</MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
 
         @* --- PRICING SECTION --- *@
-        @* --- PRICING SECTION (Hanya muncul jika belum login) --- *@
         <AuthorizeView>
             <NotAuthorized>
-                <div class="text-center mb-12 animate__animated animate__fadeIn">
-                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Class="mb-2 fw-bold">PRICING PLANS</MudChip>
-                    <MudText Typo="Typo.h3" Class="fw-bold">Pilih Langkah Sukses Anda</MudText>
+                <MudDivider Class="mb-16" Style="opacity:0.05" />
+                <div class="text-center mb-12">
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Class="mb-4 fw-bold">PRICING PLANS</MudChip>
+                    <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing:-1.5px;">Investasi Untuk Pertumbuhan Anda</MudText>
                 </div>
 
-                <MudGrid Justify="Justify.Center" Class="mb-16 animate__animated animate__fadeInUp">
-                    @* Kartu Gratis *@
+                <MudGrid Justify="Justify.Center" Class="mb-16">
                     <MudItem xs="12" sm="6" md="5">
-                        <MudPaper Class="pa-10 d-flex flex-column rounded-xl glass-card h-100 shadow-none">
+                        <MudPaper Class="pa-12 d-flex flex-column glass-card-lp h-100 shadow-none">
                             <MudText Typo="Typo.h5" Class="fw-bold mb-1">Explorer</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-8">Awal perjalanan riset Anda</MudText>
-                            <div class="d-flex align-end mb-8">
-                                <MudText Typo="Typo.h3" Class="fw-bold">Gratis</MudText>
-                            </div>
-                            <MudDivider Class="mb-8" Style="opacity: 0.1;" />
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-8">Basic insights untuk pemula.</MudText>
+                            <MudText Typo="Typo.h2" Class="fw-bold mb-8">Gratis</MudText>
+                            <MudDivider Class="mb-8" />
                             <MudStack Spacing="3" Class="mb-10">
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2">3 Top Trends Harian</MudText></div>
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2">Search Database Dasar</MudText></div>
+                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-3" /><MudText>3 Tren Teratas Harian</MudText></div>
+                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-3" /><MudText>Pencarian Niche Dasar</MudText></div>
                             </MudStack>
-                            <MudButton Href="/register" Variant="Variant.Outlined" Color="Color.Primary" Class="mt-auto py-4" FullWidth="true" Style="border-radius: 14px; font-weight: 700; text-transform: none;">Daftar Gratis</MudButton>
+                            <MudButton Href="/register" Variant="Variant.Outlined" Color="Color.Primary" FullWidth Class="py-4 rounded-xl fw-bold">Mulai Gratis</MudButton>
                         </MudPaper>
                     </MudItem>
 
-                    @* Kartu Strategist *@
                     <MudItem xs="12" sm="6" md="5">
-                        <MudPaper Class="pa-10 d-flex flex-column rounded-xl pricing-card-premium h-100 relative overflow-hidden shadow-none">
-                            <div style="position: absolute; top: 24px; right: -35px; background: #FF4081; color: white; padding: 4px 40px; transform: rotate(45deg); font-size: 0.7rem; font-weight: 900; letter-spacing: 1px;">POPULAR</div>
+                        <MudPaper Class="pa-12 d-flex flex-column glass-card-lp pricing-premium-lp h-100 shadow-xl">
+                            <div style="position: absolute; top: 30px; right: -40px; background: #FF4081; color: white; padding: 6px 50px; transform: rotate(45deg); font-size: 0.8rem; font-weight: 900; letter-spacing: 1px;">TERBAIK</div>
                             <MudText Typo="Typo.h5" Class="fw-bold mb-1">Strategist</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-8">Untuk pertumbuhan profesional</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-8">Fitur penuh untuk kreator serius.</MudText>
                             <div class="d-flex align-end mb-8">
-                                <MudText Typo="Typo.h3" Color="Color.Primary" Class="fw-bold">Rp 149k</MudText>
-                                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="ml-2 mb-1">/ bln</MudText>
+                                <MudText Typo="Typo.h2" Color="Color.Primary" Class="fw-bold">Rp 149k</MudText>
+                                <MudText Typo="Typo.h6" Class="ml-2 mb-2">/ bln</MudText>
                             </div>
-                            <MudDivider Class="mb-8" Style="opacity: 0.1;" />
+                            <MudDivider Class="mb-8" />
                             <MudStack Spacing="3" Class="mb-10">
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2" Class="fw-bold">Database Tren Tanpa Batas</MudText></div>
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2">Monitor 20 Kompetitor</MudText></div>
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2">Eksklusif "The Hot List"</MudText></div>
-                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText Typo="Typo.body2">AI Content Strategy</MudText></div>
+                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText Class="fw-bold">Akses "The Hot List" Eksklusif</MudText></div>
+                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText>Monitor Kompetitor Tanpa Batas</MudText></div>
+                                <div class="d-flex align-center"><MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Color="Color.Primary" Size="Size.Small" Class="mr-3" /><MudText>Laporan Analisis AI Mingguan</MudText></div>
                             </MudStack>
-                            <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Primary" Class="mt-auto py-4 shadow-lg" FullWidth="true" Style="border-radius: 14px; font-weight: 700; text-transform: none;">Mulai Sekarang</MudButton>
+                            <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Primary" FullWidth Class="py-4 rounded-xl fw-bold shadow-lg">Langganan Sekarang</MudButton>
                         </MudPaper>
                     </MudItem>
                 </MudGrid>
             </NotAuthorized>
 
-            @* Opsional: Tampilan untuk yang sudah Login *@
             <Authorized>
-                <div class="text-center py-16 animate__animated animate__fadeIn">
-                    <MudText Typo="Typo.h4" Class="fw-bold mb-4">Selamat Datang Kembali, @context.User.Identity?.Name!</MudText>
-                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-8">Anda sudah masuk ke sistem Trendz. Silakan lanjutkan riset Anda di Dashboard.</MudText>
-                    <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="rounded-pill px-10 py-3 shadow-none">
-                        Masuk ke Dashboard
-                    </MudButton>
+                <div class="text-center py-16 animate__animated animate__pulse animate__infinite">
+                    <MudPaper Class="pa-12 glass-card-lp d-inline-block shadow-2xl">
+                        <MudText Typo="Typo.h4" Class="fw-bold mb-2">Siap Melejitkan Akun Anda, @context.User.Identity?.Name?</MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-8">Sistem Intelijen kami telah menyiapkan data terbaru untuk Anda.</MudText>
+                        <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="rounded-pill px-12 py-4 shadow-lg fw-bold">
+                            Buka Dashboard Analitik
+                        </MudButton>
+                    </MudPaper>
                 </div>
             </Authorized>
         </AuthorizeView>

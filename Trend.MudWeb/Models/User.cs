@@ -17,5 +17,5 @@ public partial class User
     public DateTime? CreatedAt { get; set; }
     public virtual ICollection<Competitor> Competitors { get; set; } = new List<Competitor>();
     public virtual Nich Niche { get; set; }
-    public virtual ICollection<Notifications> Notifications { get; set; } = new List<Notifications>();
+    public virtual ICollection<UserNotification> Notifications { get; set; } = new List<UserNotification>();
 }

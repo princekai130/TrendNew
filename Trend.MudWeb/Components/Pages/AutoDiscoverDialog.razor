@@ -4,64 +4,144 @@
 @inject ISnackbar Snackbar
 @inject ScrapingService Scraper
 
-<MudDialog>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+    .ai-discover-container {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .ai-header-gradient {
+        background: linear-gradient(135deg, rgba(var(--mud-palette-primary-rgb), 0.1) 0%, rgba(var(--mud-palette-info-rgb), 0.1) 100%);
+        border-radius: 20px;
+        padding: 20px;
+    }
+
+    .account-item-box {
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 16px;
+        transition: all 0.2s ease;
+        margin-bottom: 8px;
+        cursor: pointer;
+    }
+
+        .account-item-box:hover {
+            background: rgba(var(--mud-palette-primary-rgb), 0.03);
+            border-color: var(--mud-palette-primary);
+        }
+
+        .account-item-box.selected {
+            background: rgba(var(--mud-palette-primary-rgb), 0.08);
+            border-color: var(--mud-palette-primary);
+            box-shadow: 0 4px 12px rgba(var(--mud-palette-primary-rgb), 0.1);
+        }
+
+    .scan-line {
+        width: 100%;
+        height: 2px;
+        background: var(--mud-palette-primary);
+        box-shadow: 0 0 10px var(--mud-palette-primary);
+        position: absolute;
+        animation: scan 2s linear infinite;
+        z-index: 5;
+    }
+
+    @@keyframes scan {
+        0% {
+            top: 0%;
+        }
+
+        100% {
+            top: 100%;
+        }
+    }
+</style>
+
+<MudDialog Class="ai-discover-container rounded-xl">
     <TitleContent>
-        <MudStack Direction="Row" AlignItems="AlignItems.Center">
-            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" />
-            <MudText Typo="Typo.h6">AI Competitor Discovery</MudText>
-        </MudStack>
+        <div class="ai-header-gradient d-flex align-center">
+            <div class="mr-4" style="background: var(--mud-palette-primary); padding: 10px; border-radius: 12px; color: white;">
+                <MudIcon Icon="@Icons.Material.Rounded.AutoAwesome" />
+            </div>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6" Class="fw-bold">AI Competitor Discovery</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Menemukan akun paling berpengaruh di niche Anda.</MudText>
+            </MudStack>
+        </div>
     </TitleContent>
     <DialogContent>
-        <MudText Typo="Typo.body2" Class="mb-4">
-            AI telah menganalisis niche Anda dan menemukan akun-akun yang relevan.
-        </MudText>
-
-        @if (_isLoading)
-        {
-            <div class="d-flex flex-column align-center py-10">
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                <MudText Typo="Typo.caption" Class="mt-2">Mencari data...</MudText>
-            </div>
-        }
-        else
-        {
-            <MudPaper MaxHeight="300px" Elevation="0" Style="overflow-y:auto; background:transparent;">
-                <MudList T="string">
+        <div class="mt-4 px-2">
+            @if (_isLoading)
+            {
+                <div class="d-flex flex-column align-center py-12 relative" style="min-height: 200px;">
+                    <div class="scan-line"></div>
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" Thickness="5" />
+                    <MudText Typo="Typo.body2" Class="mt-6 fw-bold" Color="Color.Primary">Menganalisis Pola Niche...</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Menghubungkan ke Global Trends Database</MudText>
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-3 ml-1">Rekomendasi untuk Anda:</MudText>
+                <MudPaper MaxHeight="320px" Elevation="0" Style="overflow-y:auto; background:transparent;" Class="pa-1">
                     @foreach (var acc in _recommendedAccounts)
                     {
-                        <MudListItem OnClick="@(() => ToggleSelect(acc))">
-                            <div class="d-flex align-center justify-space-between w-100">
-                                <MudStack Direction="Row" AlignItems="AlignItems.Center">
-                                    <MudAvatar Color="Color.Info" Variant="Variant.Filled" Size="Size.Small">
-                                        @acc[0].ToString().ToUpper()
-                                    </MudAvatar>
-                                    <MudText Typo="Typo.body2">@@@acc</MudText>
-                                </MudStack>
-                                <MudCheckBox T="bool"
-                                             Value="@_selectedAccounts.Contains(acc)"
-                                             Color="Color.Primary"
-                                             Dense="true" />
-                            </div>
-                        </MudListItem>
+                        var isSelected = _selectedAccounts.Contains(acc);
+                        <div class="account-item-box pa-3 d-flex align-center justify-space-between @(isSelected ? "selected" : "")"
+                             @onclick="@(() => ToggleSelect(acc))">
+
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
+                                <MudAvatar Color="@(isSelected? Color.Primary: Color.Info)" Variant="Variant.Filled" Size="Size.Medium">
+                                    @acc[0].ToString().ToUpper()
+                                </MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@@@acc</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Top Performance</MudText>
+                                </div>
+                            </MudStack>
+
+                            <MudCheckBox T="bool"
+                                         Value="@isSelected"
+                                         Color="Color.Primary"
+                                         Dense="true"
+                                         UnCheckedColor="Color.Default" />
+                        </div>
                     }
-                </MudList>
-            </MudPaper>
-        }
+                </MudPaper>
+
+                <div class="mt-4 pa-3 rounded-lg" style="background: rgba(var(--mud-palette-info-rgb), 0.05); border: 1px solid rgba(var(--mud-palette-info-rgb), 0.2);">
+                    <MudText Typo="Typo.caption" Color="Color.Info" Style="line-height: 1.4;">
+                        <MudIcon Icon="@Icons.Material.Rounded.Info" Size="Size.Small" Class="mr-1 mb-n1" />
+                        Pilih akun yang ingin Anda pantau. Data video akan ditarik setelah Anda menekan tombol di bawah.
+                    </MudText>
+                </div>
+            }
+        </div>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Batal</MudButton>
-        <MudButton Color="Color.Primary"
-                   Variant="Variant.Filled"
-                   Disabled="@(!_selectedAccounts.Any())"
-                   OnClick="Submit"
-                   Class="rounded-pill px-6 ml-2">
-            Pantau Akun (@_selectedAccounts.Count)
-        </MudButton>
+        <div class="d-flex w-100 justify-space-between px-4 pb-4 mt-2">
+            <MudButton OnClick="Cancel" Variant="Variant.Text" Class="px-6 rounded-lg">Batal</MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       Disabled="@(!_selectedAccounts.Any() || _isSubmitting)"
+                       OnClick="Submit"
+                       Class="rounded-xl px-8 py-3 shadow-none fw-bold"
+                       Style="min-width: 200px; text-transform: none;">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Sinkronisasi...</span>
+                }
+                else
+                {
+                    <span>Pantau @_selectedAccounts.Count Akun</span>
+                }
+            </MudButton>
+        </div>
     </DialogActions>
 </MudDialog>
 
 @code {
-    // Gunakan Interface IMudDialogInstance untuk menghindari error metadata CS0006
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
@@ -71,14 +151,18 @@
     private List<string> _recommendedAccounts = new();
     private List<string> _selectedAccounts = new();
     private bool _isLoading = true;
+    private bool _isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
     {
         _isLoading = true;
         try
         {
+            // Simulasi AI Think Time
+            await Task.Delay(2500);
+
             _recommendedAccounts = new List<string> {
-                "tech_insider", "gadget_review_id", "future_daily", "unbox_master"
+                "tech_insider", "gadget_review_id", "future_daily", "unbox_master", "creative_hacks"
             };
         }
         finally
@@ -99,9 +183,9 @@
 
     private async Task Submit()
     {
+        _isSubmitting = true;
         try
         {
-            // 1. Tambahkan akun ke database
             foreach (var handle in _selectedAccounts)
             {
                 await Repo.AddCompetitorAsync(new Competitor
@@ -112,22 +196,23 @@
                 });
             }
 
-            // 2. Tampilkan Snackbar info
-            Snackbar.Add("Menghubungkan ke TikTok AI... Mohon tunggu 10 detik.", Severity.Info);
+            Snackbar.Add("Koneksi AI Terbentuk. Menarik data video...", Severity.Info);
 
-            // 3. Jalankan Scraper
-            // Kita tidak memakai _ = Task.Run di sini agar kita bisa menunggu sebentar
             await Task.Run(async () =>
             {
                 await Scraper.FetchAndSaveCompetitorVideos(UserId);
             });
 
-            Snackbar.Add("Data berhasil ditarik!", Severity.Success);
+            Snackbar.Add("Sinkronisasi Selesai!", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
             Snackbar.Add("Gagal: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
         }
     }
 }

@@ -1,0 +1,77 @@
+﻿@using Trend.MudWeb.Models
+@using MudBlazor
+
+<MudDialog Class="rounded-xl pa-4">
+    <TitleContent>
+        <MudStack Row AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Rounded.Analytics" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Class="fw-bold">Detail Analisis Tren</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="max-height: 500px; overflow-y: auto;">
+            <MudStack Spacing="4">
+                @* Informasi Utama *@
+                <div class="pa-4 rounded-xl" style="background: rgba(var(--mud-palette-primary-rgb), 0.05);">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">NAMA TREN / HASHTAG</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold" Color="Color.Primary">@Trend.TrendName</MudText>
+                </div>
+
+                @* Statistik *@
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudPaper Elevation="0" Class="pa-4 border-2 border-dashed border-divider rounded-xl">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">PLATFORM</MudText>
+                            <MudText Typo="Typo.body1" Class="fw-bold">@Trend.Platform</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudPaper Elevation="0" Class="pa-4 border-2 border-dashed border-divider rounded-xl">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">GROWTH</MudText>
+                            <MudText Typo="Typo.body1" Class="fw-bold" Color="Color.Success">+@Trend.GrowthScore%</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                @* Audio Player *@
+                @if (!string.IsNullOrEmpty(Trend.SoundName))
+                {
+                    <div class="pa-4 rounded-xl" style="background: var(--mud-palette-background-grey);">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold mb-2 d-block">AUDIO YANG DIGUNAKAN</MudText>
+                        <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudStack Row Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Rounded.MusicNote" Color="Color.Info" />
+                                <MudText Typo="Typo.body2" Class="fw-bold">@Trend.SoundName</MudText>
+                            </MudStack>
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Rounded.PlayArrow"
+                                       Href="@Trend.SoundUrl" Target="_blank" Size="Size.Small" Class="rounded-pill">Play</MudButton>
+                        </MudStack>
+                    </div>
+                }
+
+                @* Detail Hashtag (Tidak Terpotong) *@
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold mb-2 d-block">HASHTAG TERKAIT</MudText>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var tag in Trend.TrendName.Split(' '))
+                        {
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Class="ma-0">#@tag.Replace("#", "")</MudChip>
+                        }
+                        @* Tambahan hashtag niche *@
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Text">#@(Trend.Niche?.NicheName ?? "Viral")</MudChip>
+                    </div>
+                </div>
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Text" Class="px-8">Tutup</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public SocialTrend Trend { get; set; }
+
+    void Close() => MudDialog.Close();
+}

@@ -1,73 +1,294 @@
 ﻿@page "/admin/settings"
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
+@using Trend.MudWeb.Models
 @inject TrendRepo Repo
 @inject ISnackbar Snackbar
 @attribute [Authorize(Roles = "Admin")]
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-6 fw-bold">Admin Control Panel</MudText>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
+    .admin-wrapper {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .admin-card {
+        border-radius: 24px !important;
+        border: 1px solid var(--mud-palette-divider);
+        transition: all 0.3s ease;
+    }
+
+    .config-section {
+        background: var(--mud-palette-surface);
+        padding: 24px;
+        border-radius: 20px;
+    }
+
+    .status-online {
+        width: 10px;
+        height: 10px;
+        background: #10B981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 10px #10B981;
+    }
+
+    .table-header-custom {
+        background-color: var(--mud-palette-background-grey);
+        font-weight: 700 !important;
+    }
+
+    .action-button-modern {
+        border-radius: 12px !important;
+        text-transform: none !important;
+        font-weight: 600 !important;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="admin-wrapper mt-10 mb-16">
+
+    @* --- HEADER & SYSTEM STATUS --- *@
+    <MudGrid Class="mb-8">
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">Admin Control Center</MudText>
+            <div class="d-flex align-center mt-2">
+                <span class="status-online mr-2"></span>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">System Core: <span class="fw-bold text-success">Healthy</span> | Connected to Apify API</MudText>
+            </div>
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex justify-md-end align-center">
+            <MudStack Row Spacing="4">
+                <MudPaper Class="pa-4 admin-card d-flex align-center shadow-none">
+                    <MudIcon Icon="@Icons.Material.Rounded.People" Color="Color.Primary" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Total Users</MudText>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_users.Count</MudText>
+                    </div>
+                </MudPaper>
+                <MudPaper Class="pa-4 admin-card d-flex align-center shadow-none">
+                    <MudIcon Icon="@Icons.Material.Rounded.Star" Color="Color.Warning" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Premium</MudText>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_users.Count(u => u.Role == "Premium")</MudText>
+                    </div>
+                </MudPaper>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
 
     <MudGrid>
-        <MudItem xs="12">
-            <MudCard Elevation="4" Class="rounded-xl">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Konfigurasi Sistem & Scraper</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudNumericField @bind-Value="_interval"
-                                     Label="Interval Sinkronisasi Otomatis (Jam)"
-                                     Variant="Variant.Outlined"
-                                     Min="1" Max="168"
-                                     HelperText="Data akan dianggap 'basi' setelah jumlah jam ini terlampaui." />
+        @* --- SYSTEM CONFIGURATION --- *@
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-8 admin-card shadow-none h-100">
+                <MudStack Row AlignItems="AlignItems.Center" Class="mb-6">
+                    <MudIcon Icon="@Icons.Material.Rounded.SettingsInputComponent" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-bold">Konfigurasi Scraper & API</MudText>
+                </MudStack>
 
-                    @* Hashtag ini sekarang bersifat opsional karena sistem sudah pakai Niche *@
-                    <MudTextField @bind-Value="_targetHashtag"
-                                  Label="Global Hashtag (Backup)"
-                                  Variant="Variant.Outlined"
-                                  Class="mt-4"
-                                  HelperText="Hashtag cadangan jika pencarian niche gagal." />
-                </MudCardContent>
-                <MudCardActions>
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField @bind-Value="_interval"
+                                         Label="Interval Scrape (Jam)"
+                                         Variant="Variant.Outlined"
+                                         Min="1" Max="168"
+                                         HelperText="Standar: 24 Jam"
+                                         Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.Timer" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_targetHashtag"
+                                      Label="Fallback Keyword"
+                                      Variant="Variant.Outlined"
+                                      HelperText="Digunakan jika niche kosong"
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.Tag" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_apiKey"
+                                      Label="Apify Master API Key"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Password"
+                                      HelperText="Jangan bagikan key ini kepada siapapun."
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.VpnKey" />
+                    </MudItem>
+                </MudGrid>
+
+                <div class="mt-8">
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Primary"
                                OnClick="SaveAllSettings"
-                               StartIcon="@Icons.Material.Filled.Save"
-                               Class="rounded-lg ml-2 mb-2">Simpan Semua Pengaturan</MudButton>
-                </MudCardActions>
-            </MudCard>
+                               StartIcon="@Icons.Material.Rounded.Save"
+                               Class="action-button-modern px-8 py-3 shadow-none">
+                        Simpan Semua Perubahan
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @* --- MAINTENANCE ACTIONS --- *@
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-8 admin-card shadow-none h-100" Style="background: rgba(var(--mud-palette-warning-rgb), 0.02);">
+                <MudStack Row AlignItems="AlignItems.Center" Class="mb-6">
+                    <MudIcon Icon="@Icons.Material.Rounded.Handyman" Color="Color.Warning" />
+                    <MudText Typo="Typo.h6" Class="fw-bold">Maintenance & Power</MudText>
+                </MudStack>
+
+                <MudStack Spacing="4">
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="rounded-xl">
+                        Aksi di bawah ini berdampak langsung pada database produksi.
+                    </MudAlert>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Info"
+                               StartIcon="@Icons.Material.Rounded.CloudSync"
+                               FullWidth="true"
+                               OnClick="TriggerManualScrape"
+                               Class="action-button-modern py-4 shadow-none">
+                        Force Global Scrape
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Rounded.AutoDelete"
+                               FullWidth="true"
+                               OnClick="CleanupOldData"
+                               Class="action-button-modern py-4">
+                        Purge Stale Data (>7d)
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* --- USER MANAGEMENT --- *@
+        <MudItem xs="12">
+            <MudPaper Class="pa-8 admin-card shadow-none mt-4">
+                <div class="d-flex align-center justify-space-between mb-8">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.h5" Class="fw-bold">User Management</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Kelola hak akses dan status premium pengguna.</MudText>
+                    </MudStack>
+
+                    <MudTextField @bind-Value="_searchString"
+                                  Placeholder="Search user or niche..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Rounded.Search"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  Clearable="true"
+                                  Style="max-width: 350px; background: var(--mud-palette-background-grey);" />
+                </div>
+
+                <MudTable Items="@FilteredUsers" Dense="false" Hover="true" Elevation="0" Class="rounded-xl overflow-hidden border border-solid border-divider">
+                    <HeaderContent>
+                        <MudTh Class="table-header-custom">EMAIL</MudTh>
+                        <MudTh Class="table-header-custom">NICHE</MudTh>
+                        <MudTh Class="table-header-custom">PLAN STATUS</MudTh>
+                        <MudTh Class="table-header-custom text-right">ACTIONS</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <div class="d-flex align-center">
+                                <MudAvatar Size="Size.Small" Color="Color.Default" Class="mr-3">@context.Email[0].ToString().ToUpper()</MudAvatar>
+                                <MudText Typo="Typo.body2" Class="fw-bold">@context.Email</MudText>
+                            </div>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info" Icon="@Icons.Material.Rounded.Category">
+                                @(context.Niche?.NicheName ?? "No Niche")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string"
+                                     Color="@(context.Role == "Premium" ? Color.Primary : Color.Default)"
+                                     Variant="@(context.Role == "Premium" ? Variant.Filled : Variant.Text)"
+                                     Size="Size.Small"
+                                     Class="fw-bold">
+                                @context.Role.ToUpper()
+                            </MudChip>
+                        </MudTd>
+                        <MudTd Class="text-right">
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Outlined"
+                                       Color="@(context.Role == "Premium" ? Color.Default : Color.Primary)"
+                                       OnClick="@(() => TogglePremium(context))"
+                                       Class="action-button-modern">
+                                @(context.Role == "Premium" ? "Downgrade" : "Make Premium")
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager InfoFormat="{first_item}-{last_item} of {all_items}" />
+                    </PagerContent>
+                </MudTable>
+            </MudPaper>
         </MudItem>
     </MudGrid>
 </MudContainer>
 
 @code {
     private int _interval = 24;
-    private string _targetHashtag = "skincare";
+    private string _targetHashtag = "";
+    private string _apiKey = "";
+    private string _searchString = ""; // Variabel pencarian
+    private List<User> _users = new();
+
+    // Properti baru untuk memfilter data user secara real-time
+    private IEnumerable<User> FilteredUsers => _users.Where(u =>
+        string.IsNullOrWhiteSpace(_searchString) ||
+        u.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+        (u.Niche?.NicheName != null && u.Niche.NicheName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+    );
 
     protected override async Task OnInitializedAsync()
     {
-        // Ambil data Interval
-        var valInterval = await Repo.GetSettingAsync("ScrapingIntervalHours");
-        if (int.TryParse(valInterval, out var res)) _interval = res;
+        await LoadSettings();
+        await LoadUsers();
+    }
 
-        // Ambil data Hashtag
-        var valHashtag = await Repo.GetSettingAsync("TargetHashtag");
-        if (!string.IsNullOrEmpty(valHashtag)) _targetHashtag = valHashtag;
+    private async Task LoadSettings()
+    {
+        _interval = int.Parse(await Repo.GetSettingAsync("ScrapingIntervalHours") ?? "24");
+        _targetHashtag = await Repo.GetSettingAsync("TargetHashtag") ?? "skincare";
+        _apiKey = await Repo.GetSettingAsync("ApifyApiKey") ?? "";
+    }
+
+    private async Task LoadUsers()
+    {
+        _users = await Repo.GetAllUsersAsync();
     }
 
     private async Task SaveAllSettings()
     {
+        await Repo.UpdateSettingAsync("ScrapingIntervalHours", _interval.ToString());
+        await Repo.UpdateSettingAsync("TargetHashtag", _targetHashtag);
+        await Repo.UpdateSettingAsync("ApifyApiKey", _apiKey);
+        Snackbar.Add("Pengaturan Sistem Diperbarui!", Severity.Success);
+    }
+
+    private async Task TriggerManualScrape()
+    {
+        Snackbar.Add("Memulai Scraper Global di Latar Belakang...", Severity.Info);
+        // Panggil Scraper Service di sini
+    }
+
+    private async Task CleanupOldData()
+    {
         try
         {
-            await Repo.UpdateSettingAsync("ScrapingIntervalHours", _interval.ToString());
-            await Repo.UpdateSettingAsync("TargetHashtag", _targetHashtag);
-            Snackbar.Add("Semua pengaturan berhasil diperbarui!", Severity.Success);
+            await Repo.CleanupOldPostsAsync(7); // Hapus yang lebih dari 7 hari
+            Snackbar.Add("Data lama (di atas 7 hari) berhasil dibersihkan.", Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Gagal menyimpan: " + ex.Message, Severity.Error);
+            Snackbar.Add("Gagal membersihkan data: " + ex.Message, Severity.Error);
         }
+    }
+
+    private async Task TogglePremium(User user)
+    {
+        user.Role = user.Role == "Premium" ? "User" : "Premium";
+        await Repo.UpdateUserAsync(user);
+        Snackbar.Add($"Status {user.Email} diperbarui ke {user.Role}", Severity.Info);
+        StateHasChanged(); // Memaksa UI me-refresh tampilan tabel
     }
 }

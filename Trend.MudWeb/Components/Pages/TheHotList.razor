@@ -10,121 +10,163 @@
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap');
 
-    .hotlist-container {
+    .hotlist-wrapper {
         font-family: 'Outfit', sans-serif;
+        background: var(--mud-palette-background);
     }
 
-    .recipe-card {
+    .premium-card {
         background: var(--mud-palette-surface);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 24px;
-        transition: all 0.3s ease;
+        border-radius: 28px !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         position: relative;
         overflow: hidden;
     }
 
-        .recipe-card:hover {
-            transform: translateY(-8px);
+        .premium-card:hover {
+            transform: translateY(-10px);
             border-color: var(--mud-palette-primary);
-            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         }
 
     .ai-magic-btn {
         background: linear-gradient(90deg, #594AE2 0%, #FF4081 100%) !important;
         color: white !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
+        font-weight: 800 !important;
+        border-radius: 16px !important;
         text-transform: none !important;
+        box-shadow: 0 10px 20px -5px rgba(89, 74, 226, 0.4) !important;
     }
 
-    .viral-badge {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 64, 129, 0.1);
-        color: #FF4081;
-        padding: 4px 12px;
-        border-radius: 8px;
-        font-size: 0.7rem;
+    .momentum-badge {
+        background: rgba(var(--mud-palette-error-rgb), 0.1);
+        color: var(--mud-palette-error);
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 0.75rem;
         font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .ai-box {
+        background: rgba(var(--mud-palette-primary-rgb), 0.05);
+        border: 2px dashed rgba(var(--mud-palette-primary-rgb), 0.2);
+        border-radius: 20px;
+    }
+
+    .chip-indicator {
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+    }
+
+    .ai-box {
+        background: rgba(var(--mud-palette-primary-rgb), 0.05);
+        border: 2px dashed rgba(var(--mud-palette-primary-rgb), 0.2);
+        border-radius: 20px;
+        color: var(--mud-palette-text-primary); /* Pastikan teks terlihat di dark/light mode */
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="hotlist-container mt-10">
-    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
-        <MudStack Spacing="0">
-            <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List 🔥</MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">Resep konten eksklusif untuk niche <b>@_userNicheName</b>.</MudText>
+<div class="hotlist-wrapper">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-10 mb-16">
+
+        @* --- PREMIUM HEADER --- *@
+        <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h2" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List <span style="color: #FF4081;">.</span></MudText>
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Style="font-weight: 400;">
+                    Konten <span class="fw-bold" style="color: var(--mud-palette-primary);">High-Probability</span> khusus niche <span class="fw-bold">@_userNicheName</span>.
+                </MudText>
+            </MudStack>
+            <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Rounded.AutoAwesome" Class="pa-6 fw-bold">PRO ACCESS</MudChip>
         </MudStack>
-        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.AutoAwesome">Premium Access</MudChip>
-    </MudStack>
 
-    @if (_isLoading)
-    {
-        <MudGrid>
-            @for (int i = 0; i < 3; i++)
-            {
-                <MudItem xs="12" md="4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="rounded-xl" />
-                </MudItem>
-            }
-        </MudGrid>
-    }
-    else if (!_hotTrends.Any())
-    {
-        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mt-10 rounded-xl">
-            Belum ada tren dengan momentum tinggi di niche @_userNicheName hari ini. Silakan cek kembali nanti!
-        </MudAlert>
-    }
-    else
-    {
-        <MudGrid>
-            @foreach (var trend in _hotTrends)
-            {
-                <MudItem xs="12" md="6" lg="4">
-                    <MudPaper Class="pa-6 recipe-card shadow-none">
-                        <div class="viral-badge">@trend.GrowthScore% MOMENTUM</div>
+        @if (_isLoading)
+        {
+            <MudGrid>
+                @for (int i = 0; i < 3; i++)
+                {
+                    <MudItem xs="12" md="4">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" Class="rounded-xl" />
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else if (!_hotTrends.Any())
+        {
+            <MudPaper Class="pa-16 rounded-xl text-center shadow-none border-2 border-dashed border-divider">
+                <MudIcon Icon="@Icons.Material.Rounded.HourglassEmpty" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                <MudText Typo="Typo.h5" Color="Color.Secondary">Belum ada tren "Hot" hari ini.</MudText>
+                <MudText Color="Color.Secondary">Sistem AI kami sedang memindai gelombang tren baru untuk @_userNicheName.</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudGrid>
+                @foreach (var trend in _hotTrends)
+                {
+                    <MudItem xs="12" md="6" lg="4">
+                        <MudPaper Class="pa-8 premium-card shadow-none d-flex flex-column h-100">
 
-                        <MudStack Spacing="4">
-                            <div class="d-flex align-center">
-                                <MudIcon Icon="@(trend.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)" Size="Size.Small" Class="mr-2" />
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">@trend.Platform.ToUpper() TREND</MudText>
+                            @* Momentum Header *@
+                            <div class="d-flex justify-space-between align-center mb-6">
+                                <div class="momentum-badge d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Rounded.Whatshot" Size="Size.Small" Class="mr-1" />
+                                    @trend.GrowthScore% MOMENTUM
+                                </div>
+                                <MudIcon Icon="@(trend.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)" Size="Size.Small" Style="opacity: 0.5" />
                             </div>
 
-                            <MudText Typo="Typo.h5" Class="fw-bold">@trend.TrendName</MudText>
+                            @* Trend Info *@
+                            <MudText Typo="Typo.h5" Class="fw-bold mb-2" Style="line-height: 1.2;">@trend.TrendName</MudText>
 
-                            <div class="d-flex gap-2">
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Speed" Color="Color.Info">Mudah</MudChip>
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error">Viral</MudChip>
+                            <div class="d-flex flex-wrap gap-2 mb-6">
+                                @* Ganti Icons.Material.Rounded.Bolts menjadi Icons.Material.Rounded.Bolt *@
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text" Icon="@Icons.Material.Rounded.Bolt" Class="chip-indicator">Easy Entry</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text" Icon="@Icons.Material.Rounded.TrendingUp" Class="chip-indicator">Explosive</MudChip>
                             </div>
 
-                            <MudDivider Style="opacity: 0.1;" />
+                            <MudDivider Style="opacity: 0.1;" Class="mb-6" />
 
-                            <div class="d-flex align-center justify-space-between">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">AI Content Hook</MudText>
-                                <MudIconButton Icon="@Icons.Material.Rounded.AutoAwesome"
-                                               Class="ai-magic-btn"
-                                               Size="Size.Small"
-                                               OnClick="@(() => GenerateAIIdeas(trend))" />
-                            </div>
+                            @* AI Action Area *@
+                            <MudStack Spacing="3" Class="mt-auto">
+                                <div class="d-flex align-center justify-space-between">
+                                    <MudText Typo="Typo.caption" Class="fw-bold" Color="Color.Secondary">AI CONTENT BLUEPRINT</MudText>
+                                    @if (!_isGenerating || _selectedTrendId != trend.TrendId)
+                                    {
+                                        <MudButton OnClick="@(() => GenerateAIIdeas(trend))"
+                                                   StartIcon="@Icons.Material.Rounded.AutoAwesome"
+                                                   Class="ai-magic-btn px-4 py-2">
+                                            Magic Reveal
+                                        </MudButton>
+                                    }
+                                </div>
 
-                            @if (_isGenerating && _selectedTrendId == trend.TrendId)
-                            {
-                                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="rounded-pill" />
-                            }
-                            else if (!string.IsNullOrEmpty(trend.TrendType) && trend.TrendType != "Hashtag" && _selectedTrendId == trend.TrendId)
-                            {
-                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-2" Style="border-radius: 12px; font-size: 0.85rem;">
-                                    <b>AI Suggestion:</b> @trend.TrendType
-                                </MudAlert>
-                            }
-                        </MudStack>
-                    </MudPaper>
-                </MudItem>
-            }
-        </MudGrid>
-    }
-</MudContainer>
+                                @if (_isGenerating && _selectedTrendId == trend.TrendId)
+                                {
+                                    <div class="pa-8 text-center ai-box">
+                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+                                        <MudText Typo="Typo.caption" Class="d-block mt-2">Menganalisis Pola Viral...</MudText>
+                                    </div>
+                                }
+                                else if (!string.IsNullOrEmpty(trend.TrendType) && trend.TrendType != "Hashtag" && _selectedTrendId == trend.TrendId)
+                                {
+                                    <div class="pa-5 ai-box animate__animated animate__fadeInUp">
+                                        <MudText Typo="Typo.body2" Style="line-height: 1.6; font-weight: 500;">
+                                            <MudIcon Icon="@Icons.Material.Rounded.TipsAndUpdates" Color="Color.Primary" Size="Size.Small" Class="mr-2 mb-n1" />
+                                            @trend.TrendType
+                                        </MudText>
+                                    </div>
+                                }
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudContainer>
+</div>
 
 @code {
     private bool _isLoading = true;

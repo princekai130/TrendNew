@@ -10,96 +10,159 @@
 
     .dialog-container {
         font-family: 'Outfit', sans-serif;
+        overflow: hidden;
     }
 
-    .platform-selector {
+    .dialog-header {
+        background: linear-gradient(135deg, rgba(var(--mud-palette-primary-rgb), 0.05) 0%, rgba(var(--mud-palette-secondary-rgb), 0.05) 100%);
+        padding: 24px;
+        border-bottom: 1px solid var(--mud-palette-divider);
+    }
+
+    .dialog-icon-box {
+        background: var(--mud-palette-primary);
+        color: white;
+        border-radius: 16px;
+        padding: 12px;
+        box-shadow: 0 8px 16px -4px rgba(var(--mud-palette-primary-rgb), 0.3);
+    }
+
+    .input-section {
+        background: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-divider);
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .input-section:focus-within {
+        border-color: var(--mud-palette-primary);
+        box-shadow: 0 0 0 4px rgba(var(--mud-palette-primary-rgb), 0.05);
+    }
+
+    .platform-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .platform-card {
+        cursor: pointer;
+        padding: 16px;
+        border: 2px solid var(--mud-palette-divider);
+        border-radius: 16px;
+        text-align: center;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .platform-card.active {
+        border-color: var(--mud-palette-primary);
+        background: rgba(var(--mud-palette-primary-rgb), 0.04);
+    }
+
+    .platform-card:hover:not(.active) {
+        border-color: var(--mud-palette-lines);
         background: var(--mud-palette-background-grey);
-        border-radius: 12px;
-        padding: 8px;
     }
 
-    .dialog-header-icon {
-        background: rgba(var(--mud-palette-primary-rgb), 0.1);
-        color: var(--mud-palette-primary);
+    .helper-box {
+        background: rgba(var(--mud-palette-info-rgb), 0.05);
         border-radius: 12px;
         padding: 12px;
-    }
-
-    .helper-text {
-        font-size: 0.75rem;
-        color: var(--mud-palette-text-secondary);
         display: flex;
-        align-items: center;
-        gap: 6px;
+        gap: 12px;
+        align-items: flex-start;
     }
 </style>
 
-<MudDialog Class="dialog-container rounded-xl pa-2">
+<MudDialog Class="dialog-container rounded-xl">
     <TitleContent>
-        <div class="d-flex align-center mt-2">
-            <div class="dialog-header-icon mr-4">
-                <MudIcon Icon="@Icons.Material.Rounded.PersonAdd" Size="Size.Medium" />
+        <div class="dialog-header d-flex align-center">
+            <div class="dialog-icon-box mr-4">
+                <MudIcon Icon="@Icons.Material.Rounded.Radar" Size="Size.Medium" />
             </div>
             <MudStack Spacing="0">
-                <MudText Typo="Typo.h6" Class="fw-bold">Pantau Kompetitor</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Masukkan username untuk mulai menganalisis konten mereka.</MudText>
+                <MudText Typo="Typo.h6" Class="fw-bold">Target Intelijen Baru</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Masukkan akun kompetitor untuk mulai memantau strategi mereka.</MudText>
             </MudStack>
         </div>
     </TitleContent>
     <DialogContent>
-        <MudStack Spacing="4" Class="mt-4">
-            @* INPUT USERNAME *@
-            <div>
-                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-1 ml-1">Account Handle</MudText>
+        <MudStack Spacing="4" Class="mt-6 mb-4 px-2">
+
+            @* SECTION 1: USERNAME *@
+            <div class="input-section">
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-3 d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Rounded.AlternateEmail" Size="Size.Small" Class="mr-2" Color="Color.Primary" />
+                    Username Akun
+                </MudText>
+
+                @* PERBAIKAN: AdornmentText menggunakan variabel atau string literal yang benar *@
                 <MudTextField @bind-Value="_handle"
                               Placeholder="kaisaribrahim"
-                              Variant="Variant.Outlined"
+                              Variant="Variant.Text"
+                              Underline="false"
+                              FullWidth="true"
+                              Style="font-size: 1.1rem; font-weight: 600;"
                               Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Rounded.AlternateEmail"
-                              AdornmentColor="Color.Primary"
-                              Class="bg-surface"
-                              FullWidth="true" />
-                <div class="helper-text mt-2 ml-1">
-                    <MudIcon Icon="@Icons.Material.Rounded.Info" Size="Size.Small" />
-                    <span>Pastikan akun tidak dalam keadaan private.</span>
+                              AdornmentText="@AtSymbol"
+                              AdornmentColor="Color.Primary" />
+            </div>
+
+            @* SECTION 2: PLATFORM SELECTION *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-3 ml-1">Pilih Platform</MudText>
+                <div class="platform-btn-group">
+                    @* PERBAIKAN: Memastikan event @onclick tidak memiliki argumen yang hilang *@
+                    <div class="platform-card @(_platform == "TikTok" ? "active" : "")" @onclick="@(() => SetPlatform("TikTok"))">
+                        <MudIcon Icon="@Icons.Custom.Brands.TikTok" Color="@(_platform == "TikTok" ? Color.Primary : Color.Default)" />
+                        <MudText Typo="Typo.body2" Class="@(_platform == "TikTok" ? "fw-bold" : "")">TikTok</MudText>
+                    </div>
+                    <div class="platform-card @(_platform == "Instagram" ? "active" : "")" @onclick="@(() => SetPlatform("Instagram"))">
+                        <MudIcon Icon="@Icons.Custom.Brands.Instagram" Color="@(_platform == "Instagram" ? Color.Primary : Color.Default)" />
+                        <MudText Typo="Typo.body2" Class="@(_platform == "Instagram" ? "fw-bold" : "")">Instagram</MudText>
+                    </div>
                 </div>
             </div>
 
-            @* PLATFORM SELECTOR *@
-            <div>
-                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-1 ml-1">Platform Utama</MudText>
-                <MudSelect T="string" @bind-Value="_platform"
-                           Variant="Variant.Outlined"
-                           AnchorOrigin="Origin.BottomCenter"
-                           Class="bg-surface">
-                    <MudSelectItem Value="@("TikTok")">
-                        <div class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Custom.Brands.TikTok" Size="Size.Small" Class="mr-2" /> TikTok
-                        </div>
-                    </MudSelectItem>
-                    <MudSelectItem Value="@("Instagram")">
-                        <div class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Custom.Brands.Instagram" Size="Size.Small" Class="mr-2" /> Instagram
-                        </div>
-                    </MudSelectItem>
-                </MudSelect>
+            @* SECTION 3: HELPER *@
+            <div class="helper-box">
+                <MudIcon Icon="@Icons.Material.Rounded.AutoAwesome" Color="Color.Info" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="line-height: 1.5;">
+                    AI kami akan menarik 10 video terakhir akun ini dan menganalisis <b>Engagement Rate</b> secara otomatis setelah Anda menyimpannya.
+                </MudText>
             </div>
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel"
-                   Variant="Variant.Text"
-                   Class="rounded-lg px-6"
-                   Style="text-transform: none; font-weight: 600;">
-            Batal
-        </MudButton>
-        <MudButton Color="Color.Primary"
-                   Variant="Variant.Filled"
-                   OnClick="Submit"
-                   Class="rounded-lg px-8 py-2 shadow-none"
-                   Style="text-transform: none; font-weight: 700;">
-            Mulai Pantau
-        </MudButton>
+        <div class="d-flex w-100 justify-space-between px-4 pb-4">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Text"
+                       Class="rounded-lg px-6"
+                       Style="text-transform: none; font-weight: 600;">
+                Batal
+            </MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="Submit"
+                       Disabled="@_isSubmitting"
+                       Class="rounded-xl px-10 py-3 shadow-none fw-bold"
+                       Style="text-transform: none; min-width: 160px;">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Processing...</span>
+                }
+                else
+                {
+                    <span>Simpan & Scan</span>
+                }
+            </MudButton>
+        </div>
     </DialogActions>
 </MudDialog>
 
@@ -109,20 +172,30 @@
 
     private string _handle = "";
     private string _platform = "TikTok";
+    private bool _isSubmitting = false;
+    private string AtSymbol = "@"; // Menghindari error mixed content
 
     private void Cancel() => MudDialog?.Cancel();
+
+    // Fungsi helper untuk handle click platform
+    private void SetPlatform(string p)
+    {
+        _platform = p;
+    }
 
     private async Task Submit()
     {
         if (string.IsNullOrWhiteSpace(_handle))
         {
-            Snackbar.Add("Username tidak boleh kosong!", Severity.Warning);
+            Snackbar.Add("Masukkan username kompetitor!", Severity.Warning);
             return;
         }
 
+        _isSubmitting = true;
+        StateHasChanged(); // Memastikan UI terupdate saat loading
+
         try
         {
-            // AMBIL USER ID DARI LOGIN SESSION
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var userIdClaim = authState.User.FindFirst("UserId")?.Value;
 
@@ -133,18 +206,19 @@
             }
 
             int currentUserId = int.Parse(userIdClaim);
+            // Membersihkan input
+            string cleanHandle = _handle.Trim().Replace("@", "");
 
             var newComp = new Competitor
             {
-                UserId = currentUserId, // Gunakan ID asli user yang login
-                AccountHandle = _handle.StartsWith("@") ? _handle : "@" + _handle,
+                UserId = currentUserId,
+                AccountHandle = "@" + cleanHandle,
                 Platform = _platform
             };
 
             await Repo.AddCompetitorAsync(newComp);
-            Snackbar.Add("Kompetitor disimpan. Menjalankan AI Scraper...", Severity.Info);
+            Snackbar.Add($"Menganalisis @{cleanHandle}. Mohon tunggu...", Severity.Info);
 
-            // Jalankan Scraper khusus untuk user ini
             _ = Task.Run(async () =>
             {
                 try { await Scraper.FetchAndSaveCompetitorVideos(currentUserId); }
@@ -155,7 +229,11 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Gagal: " + ex.Message, Severity.Error);
+            Snackbar.Add("Gagal menyimpan data: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
         }
     }
 }

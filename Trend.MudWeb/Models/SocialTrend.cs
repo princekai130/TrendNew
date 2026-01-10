@@ -29,4 +29,7 @@ public partial class SocialTrend
 
     public double GrowthScoreValue => Convert.ToDouble(GrowthScore);
 
+    public string? SoundName { get; set; }
+    public string? SoundUrl { get; set; }
+
 }

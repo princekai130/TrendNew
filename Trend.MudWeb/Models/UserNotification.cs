@@ -2,22 +2,17 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Trend.MudWeb.Models;
 
-public partial class Notifications
+public partial class UserNotification // Ganti nama di sini
 {
-    [Key] // Tambahkan ini untuk memberitahu EF Core bahwa ini adalah Primary Key
     public int NotificationId { get; set; }
-
-    public int? UserId { get; set; }
-
-    public string Message { get; set; }
-
+    public int UserId { get; set; }
+    public string Message { get; set; } = "";
     public bool? IsRead { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public virtual User User { get; set; }
 }

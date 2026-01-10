@@ -7,135 +7,231 @@
 @inject ISnackbar Snackbar
 @implements IDisposable
 @attribute [Authorize]
+@inject IDialogService DialogService
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
 
-    .explorer-container {
+    .explorer-wrapper {
         font-family: 'Outfit', sans-serif;
+        background: var(--mud-palette-background);
     }
 
-    .search-wrapper {
+    /* Search Bar Modern */
+    .search-glass {
         background: var(--mud-palette-surface);
-        border: 1px solid var(--mud-palette-divider);
-        border-radius: 20px;
-        padding: 8px 16px;
+        border: 2px solid var(--mud-palette-divider);
+        border-radius: 24px;
+        padding: 12px 24px;
         display: flex;
         align-items: center;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .search-wrapper:focus-within {
-        border-color: var(--mud-palette-primary);
-        box-shadow: 0 0 0 3px rgba(var(--mud-palette-primary-rgb), 0.1);
-    }
+        .search-glass:focus-within {
+            border-color: var(--mud-palette-primary);
+            transform: scale(1.01);
+            box-shadow: 0 10px 30px -10px rgba(var(--mud-palette-primary-rgb), 0.2);
+        }
 
-    .filter-chip {
-        transition: all 0.2s ease;
+    /* Filter Chips */
+    .niche-chip {
+        font-weight: 600 !important;
+        border-radius: 12px !important;
+        padding: 20px 16px !important;
         border: 1px solid var(--mud-palette-divider) !important;
         background: var(--mud-palette-surface) !important;
-        cursor: pointer;
+        transition: 0.3s !important;
     }
 
-    .filter-chip.active {
-        background: var(--mud-palette-primary) !important;
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(var(--mud-palette-primary-rgb), 0.3);
-    }
+        .niche-chip.active {
+            background: var(--mud-palette-primary) !important;
+            color: white !important;
+            border-color: var(--mud-palette-primary) !important;
+        }
 
-    .trend-card-premium {
+    /* Trend Card Bento Style */
+    .trend-card-explorer {
         background: var(--mud-palette-surface);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 20px !important;
+        border-radius: 24px !important;
         transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+        .trend-card-explorer:hover {
+            border-color: var(--mud-palette-primary);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px -10px rgba(0,0,0,0.1);
+        }
+
+    .audio-panel {
+        background: rgba(var(--mud-palette-primary-rgb), 0.05);
+        border: 1px dashed rgba(var(--mud-palette-primary-rgb), 0.3);
+        border-radius: 16px;
+        padding: 12px;
+    }
+
+    .growth-badge {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 800;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+        padding: 4px 10px;
+        border-radius: 8px;
+    }
+
+    .platform-tag {
+        font-size: 0.65rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 2px 8px;
+        border-radius: 6px;
+    }
+
+    .tk-tag {
+        background: #000;
+        color: #fff;
+    }
+
+    .ig-tag {
+        background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        color: #fff;
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="explorer-container mt-10 mb-16">
-    @* --- HEADER --- *@
-    <MudStack Class="mb-8">
-        <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -1.5px;">Trend Explorer</MudText>
-        <MudText Typo="Typo.body1" Color="Color.Secondary">Telusuri tren viral di berbagai niche industri.</MudText>
-    </MudStack>
+<PageTitle>Trend Explorer - Trendz</PageTitle>
 
-    @* --- SEARCH & NICHE FILTER AREA --- *@
-    <MudStack Spacing="4" Class="mb-10">
-        <div class="search-wrapper">
-            <MudIcon Icon="@Icons.Material.Rounded.Search" Color="Color.Primary" Class="mr-3" />
-            <MudTextField @bind-Value="SearchTerm"
-                          Placeholder="Cari topik spesifik..."
-                          Variant="Variant.Text"
-                          Underline="false"
-                          FullWidth
-                          Immediate="true" />
+<div class="explorer-wrapper">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-10 mb-16">
 
-            @if (_isSearching)
-            {
-                <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
-            }
-        </div>
+        @* --- HEADER --- *@
+        <MudStack Class="mb-10 text-center">
+            <MudText Typo="Typo.h2" Class="fw-bold" Style="letter-spacing: -2px;">Explore Trends <span style="color: var(--mud-palette-primary);">.</span></MudText>
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Style="font-weight: 400;">Temukan audio dan konten yang akan meledak besok pagi.</MudText>
+        </MudStack>
 
-        @* FILTER BERDASARKAN NICHE DARI DATABASE *@
-        <div class="d-flex flex-wrap gap-2">
-            <MudChip T="string"
-                     Text="Semua Niche"
-                     OnClick="@(() => SelectNiche(0))"
-                     Class="@(_selectedNicheId == 0 ? "filter-chip active px-4" : "filter-chip px-4")"
-                     Variant="Variant.Text" />
+        @* --- SEARCH & FILTERS --- *@
+        <MudStack Spacing="6" Class="mb-12">
+            <div class="search-glass">
+                <MudIcon Icon="@Icons.Material.Rounded.Search" Color="Color.Primary" Class="mr-4" Size="Size.Large" />
+                <MudTextField @bind-Value="SearchTerm"
+                              Placeholder="Cari hashtag, topik, atau musik viral..."
+                              Variant="Variant.Text"
+                              Underline="false"
+                              FullWidth
+                              Immediate="true"
+                              Style="font-size: 1.1rem; font-weight: 500;" />
+                @if (_isSearching)
+                {
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+                }
+            </div>
 
-            @foreach (var niche in _niches)
-            {
+            <div class="d-flex flex-wrap gap-3 justify-center">
                 <MudChip T="string"
-                         Text="@niche.NicheName"
-                         OnClick="@(() => SelectNiche(niche.NicheId))"
-                         Class="@(_selectedNicheId == niche.NicheId ? "filter-chip active px-4" : "filter-chip px-4")"
-                         Variant="Variant.Text" />
-            }
-        </div>
-    </MudStack>
+                         Text="All Niches"
+                         OnClick="@(() => SelectNiche(0))"
+                         Class="@(_selectedNicheId == 0 ? "niche-chip active" : "niche-chip")" />
 
-    @* --- RESULTS --- *@
-    @if (_results != null && _results.Any())
-    {
-        <MudGrid>
-            @foreach (var trend in _results)
+                @foreach (var niche in _niches)
+                {
+                    <MudChip T="string"
+                             Text="@niche.NicheName"
+                             OnClick="@(() => SelectNiche(niche.NicheId))"
+                             Class="@(_selectedNicheId == niche.NicheId ? "niche-chip active" : "niche-chip")" />
+                }
+            </div>
+        </MudStack>
+
+        @* --- RESULTS GRID --- *@
+        <MudGrid Spacing="4">
+            @if (_results != null && _results.Any())
             {
-                <MudItem xs="12" sm="6" md="4">
-                    <MudPaper Class="pa-6 trend-card-premium shadow-none">
-                        <MudStack Spacing="4">
-                            <div class="d-flex justify-space-between align-start">
-                                <MudText Typo="Typo.h6" Class="fw-bold">@trend.TrendName</MudText>
-                                <MudText Typo="Typo.caption" Class="pa-1 rounded" Style="background:rgba(var(--mud-palette-primary-rgb), 0.1); color:var(--mud-palette-primary); font-weight:800;">
-                                    @trend.Platform.ToUpper()
-                                </MudText>
-                            </div>
+                @foreach (var trend in _results)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="pa-6 trend-card-explorer shadow-none d-flex flex-column" Style="height:100%">
+                            <MudStack Spacing="5" Class="h-100">
+                                @* Platform & Growth *@
+                                <div class="d-flex justify-space-between align-center">
+                                    <span class="platform-tag @(trend.Platform == "TikTok" ? "tk-tag" : "ig-tag")">
+                                        @trend.Platform.ToUpper()
+                                    </span>
+                                    <div class="growth-badge">
+                                        +@((trend.GrowthScore ?? 0).ToString("0"))%
+                                    </div>
+                                </div>
 
-                            @* TAMPILKAN NAMA NICHE PADA CARD *@
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                Niche: @(trend.Niche?.NicheName ?? "Umum")
-                            </MudText>
+                                @* Trend Title *@
+                                <div style="min-height: 60px;">
+                                    <MudText Typo="Typo.h5" Class="fw-bold" Style="line-height: 1.2;">@trend.TrendName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Rounded.Category" Size="Size.Small" Class="mr-1" />
+                                        @(trend.Niche?.NicheName ?? "General")
+                                    </MudText>
+                                </div>
 
-                            <div class="d-flex justify-space-between align-end">
-                                <MudStack Spacing="0">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">GROWTH</MudText>
-                                    <MudText Typo="Typo.h5" Class="fw-bold" Color="Color.Success">+@trend.GrowthScore%</MudText>
-                                </MudStack>
-                                <MudIcon Icon="@Icons.Material.Outlined.AutoGraph" Color="Color.Success" />
-                            </div>
-                        </MudStack>
-                    </MudPaper>
+                                @* Audio Player Panel *@
+                                @if (!string.IsNullOrEmpty(trend.SoundName))
+                                {
+                                    <div class="audio-panel">
+                                        <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Style="overflow: hidden;">
+                                                <div style="background: var(--mud-palette-primary); border-radius: 8px; padding: 6px;">
+                                                    <MudIcon Icon="@Icons.Material.Rounded.MusicNote" Color="Color.Surface" Size="Size.Small" />
+                                                </div>
+                                                <div style="overflow: hidden;">
+                                                    <MudText Typo="Typo.caption" Class="fw-bold d-block" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                        @trend.SoundName
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Trending Audio</MudText>
+                                                </div>
+                                            </MudStack>
+
+                                            @if (!string.IsNullOrEmpty(trend.SoundUrl))
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow"
+                                                               Variant="Variant.Filled"
+                                                               Color="Color.Primary"
+                                                               Size="Size.Small"
+                                                               Href="@trend.SoundUrl"
+                                                               Target="_blank" />
+                                            }
+                                        </MudStack>
+                                    </div>
+                                }
+
+                                <MudSpacer />
+
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           FullWidth
+                                           Class="rounded-pill py-2 mt-2"
+                                           OnClick="@(() => OpenDetail(trend))"
+                                           EndIcon="@Icons.Material.Rounded.Launch"
+                                           Style="text-transform: none; font-weight: 700;">
+                                    Analisis Detail
+                                </MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+            }
+            else if (!_isSearching)
+            {
+                @* Jika kosong, tampilkan pesan dalam 1 baris grid penuh *@
+                <MudItem xs="12">
+                    <div class="text-center py-16" style="background: rgba(var(--mud-palette-surface-rgb), 0.5); border-radius: 32px; border: 2px dashed var(--mud-palette-divider);">
+                        <MudIcon Icon="@Icons.Material.Rounded.SearchOff" Style="font-size: 4rem; opacity: 0.2;" />
+                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-4">Belum ada data di niche ini.</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Coba ubah kata kunci atau pilih niche lain.</MudText>
+                    </div>
                 </MudItem>
             }
         </MudGrid>
-    }
-    else if (!_isSearching)
-    {
-        <div class="text-center py-16" style="opacity: 0.5;">
-            <MudIcon Icon="@Icons.Material.Rounded.SearchOff" Style="font-size: 3rem;" />
-            <MudText Typo="Typo.body1">Tidak ada data ditemukan untuk niche ini.</MudText>
-        </div>
-    }
-</MudContainer>
+    </MudContainer>
+</div>
 
 @code {
     private string _searchTerm = "";
@@ -147,15 +243,13 @@
 
     private bool _isSearching = false;
     private List<SocialTrend> _results = new();
-    private List<Nich> _niches = new(); // Menggunakan Nich sesuai model EF Core
-    private int _selectedNicheId = 0; // 0 berarti "Semua"
+    private List<Nich> _niches = new();
+    private int _selectedNicheId = 0;
     private Timer? _debounceTimer;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Ambil daftar niche untuk filter chips
         _niches = await Repo.GetNichesAsync();
-        // 2. Load data awal
         await ExecuteSearch();
     }
 
@@ -170,10 +264,9 @@
         _isSearching = true;
         StateHasChanged();
 
-        // Ambil data berdasarkan pencarian
+        // Repo sekarang akan mengembalikan data termasuk SoundName dan SoundUrl
         var allResults = await Repo.SearchTrendsAsync(_searchTerm);
 
-        // Filter berdasarkan Niche jika dipilih (bukan 0)
         if (_selectedNicheId != 0)
         {
             _results = allResults.Where(t => t.NicheId == _selectedNicheId).ToList();
@@ -187,7 +280,6 @@
         StateHasChanged();
     }
 
-    // --- LOGIK DEBOUNCING (Timer) ---
     private void StartTimer()
     {
         _debounceTimer?.Stop();
@@ -204,4 +296,12 @@
     }
 
     public void Dispose() => _debounceTimer?.Dispose();
+
+    private async Task OpenDetail(SocialTrend trend)
+    {
+        var parameters = new DialogParameters<TrendDetailDialog> { { x => x.Trend, trend } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        await DialogService.ShowAsync<TrendDetailDialog>("Detail Tren", parameters, options);
+    }
 }

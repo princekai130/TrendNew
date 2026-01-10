@@ -22,7 +22,6 @@ builder.Services.AddHttpClient<ScrapingService>();
 builder.Services.AddScoped<TrendRepo>();
 builder.Services.AddScoped<TrendAnalyzer>();
 builder.Services.AddScoped<Report>();
-builder.Services.AddScoped<Trend.MudWeb.Services.Notifications>();
 
 // 3. Tambahkan layanan MudBlazor
 builder.Services.AddMudServices(config => {

@@ -1,276 +1,302 @@
 ﻿@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
 @using Trend.MudWeb.Models
 @using Trend.MudWeb.Services
-@using System.Security.Claims
-@inject ScrapingService Scraper
-@inject TrendAnalyzer Analyzer
-@inject Report ReportService
 @inject TrendRepo Repo
+@inject ScrapingService Scraper
+@inject AuthenticationStateProvider AuthProvider
 @inject ISnackbar Snackbar
-@inject AuthenticationStateProvider AuthStateProvider
-@rendermode Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer
+@attribute [Authorize]
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-
-    .dashboard-wrapper {
+    .db-wrapper {
         font-family: 'Outfit', sans-serif;
-        background-color: var(--mud-palette-background);
-        padding-bottom: 50px;
     }
 
-    /* AI Highlight Card */
-    .ai-spotlight {
-        background: linear-gradient(135deg, var(--mud-palette-surface) 0%, rgba(89, 74, 226, 0.08) 100%);
-        border: 1px solid var(--mud-palette-divider);
-        border-radius: 28px;
-        position: relative;
+    /* Hero Section Glow */
+    .hero-bento {
+        background: #0F172A;
+        background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%), radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.1) 0, transparent 50%);
+        border-radius: 32px;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.05);
     }
 
-    .trend-bento-card {
+    /* Bento Card Styling */
+    .bento-card {
         background: var(--mud-palette-surface);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 20px;
-        transition: all 0.3s ease;
+        border-radius: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
     }
 
-    /* Perbaikan kontras teks platform */
-    .platform-tag {
+        .bento-card:hover {
+            transform: scale(1.02);
+            border-color: var(--mud-palette-primary);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+    /* Platform Branding */
+    .badge-tiktok {
+        background: #000;
+        color: #fff;
         padding: 4px 12px;
-        border-radius: 8px;
-        font-size: 0.75rem;
+        border-radius: 10px;
         font-weight: 800;
-        text-transform: uppercase;
+        font-size: 0.7rem;
     }
 
-    .tiktok-tag {
-        background: rgba(var(--mud-palette-text-primary-rgb), 0.1);
-        color: var(--mud-palette-text-primary); /* Mengikuti tema dark/light */
+    .badge-ig {
+        background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 0.7rem;
     }
 
-    .ig-tag {
-        background: rgba(225, 48, 108, 0.1);
-        color: #E1306C;
+    .trend-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
     }
 
-    .hashtag-chip {
-        background: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
+    .growth-text {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 800;
+        color: #10B981;
+    }
+
+    /* Floating Action Button Style */
+    .refresh-fab {
+        background: linear-gradient(90deg, #6366f1, #a855f7) !important;
+        color: white !important;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* Merapikan Timeline agar tidak terlalu memakan ruang */
+    .custom-timeline {
+        padding-left: 0 !important;
+    }
+
+        .custom-timeline .mud-timeline-item-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+    .ai-insight-btn {
+        background-color: white !important;
         color: var(--mud-palette-primary) !important;
-        font-weight: 600 !important;
-        border: 1px solid rgba(var(--mud-palette-primary-rgb), 0.2) !important;
-    }
-
-    .report-btn-custom {
-        background-color: #FFFFFF !important; /* Putih bersih agar kontras di BG Ungu */
-        color: var(--mud-palette-primary) !important;
-        font-weight: 800 !important;
-        border-radius: 14px !important;
+        font-weight: 700 !important;
+        border-radius: 20px !important;
     }
 </style>
 
-<div class="dashboard-wrapper">
-    @* --- HEADER --- *@
-    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-6">
-        <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-            <MudStack Spacing="0">
-                <MudText Typo="Typo.h4" Class="fw-bold" Style="letter-spacing: -1.5px;">Market Intelligence</MudText>
-                @* TAMPILKAN NAMA NICHE USER *@
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Analisis real-time untuk niche <b>@_userNicheName</b>.</MudText>
-            </MudStack>
-            <MudButton OnClick="RefreshTrends" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Rounded.Sync" Class="rounded-xl px-6 py-2 shadow-none" Disabled="@_isSyncing">
-                @(_isSyncing ? "Menyinkronkan..." : "Sinkronisasi")
-            </MudButton>
-        </MudStack>
-    </MudContainer>
+<MudContainer MaxWidth="MaxWidth.Large" Class="db-wrapper mt-8 mb-16">
+    @* --- TOP BENTO: HERO & QUICK STATS --- *@
+    <MudGrid>
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-10 hero-bento h-100 d-flex flex-column justify-center relative overflow-hidden">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h6" Style="opacity: 0.6; letter-spacing: 2px;">WELCOME BACK</MudText>
+                    <MudText Typo="Typo.h2" Class="fw-bold mb-2">@_username <span style="color: #6366f1;">.</span></MudText>
+                    <MudText Typo="Typo.h6" Style="opacity: 0.8; font-weight: 300;">
+                        Saat ini ada <span class="fw-bold text-white">@_viralCount tren viral</span> di niche <span class="fw-bold text-white">@_userNicheName</span> yang perlu kamu perhatikan.
+                    </MudText>
+                </MudStack>
+                <div class="mt-8 d-flex gap-4">
+                    <MudButton Variant="Variant.Filled" OnClick="RefreshData" Class="refresh-fab rounded-xl px-8 py-3" StartIcon="@Icons.Material.Rounded.AutoAwesome">
+                        Scan Niche Sekarang
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
 
-    <MudContainer MaxWidth="MaxWidth.Large">
-        @if (_isLoading)
+        <MudItem xs="12" lg="4">
+            <MudGrid>
+                <MudItem xs="6" lg="12">
+                    <MudPaper Class="pa-6 bento-card d-flex flex-column justify-center align-center text-center">
+                        <MudIcon Icon="@Icons.Material.Rounded.TrendingUp" Color="Color.Primary" Size="Size.Large" Class="mb-2" />
+                        <MudText Typo="Typo.h4" Class="fw-bold">@_totalTrends</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">TOTAL TRENDS</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" lg="12">
+                    <MudPaper Class="pa-6 bento-card d-flex flex-column justify-center align-center text-center">
+                        <MudIcon Icon="@Icons.Material.Rounded.Update" Color="Color.Info" Size="Size.Large" Class="mb-2" />
+                        <MudText Typo="Typo.h4" Class="fw-bold">@_lastUpdate.ToString("HH:mm")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">LAST UPDATED</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+
+    @* --- MIDDLE BENTO: TRENDING FEED --- *@
+    <div class="d-flex align-center justify-space-between mt-12 mb-6">
+        <MudText Typo="Typo.h4" Class="fw-bold">Market Pulse</MudText>
+        <MudButton EndIcon="@Icons.Material.Rounded.NorthEast" Href=/trendexplorer Color=" Color.Primary" Style="text-transform: none;">View Explorer</MudButton>
+    </div>
+
+
+
+    <MudGrid>
+        @if (!_viralTrends.Any())
         {
-            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            <MudItem xs="12">
+                <div class="text-center pa-16 bento-card border-dashed">
+                    <MudIcon Icon="@Icons.Material.Rounded.CloudOff" Size="Size.Large" Color="Color.Secondary" Opacity="0.5" />
+                    <MudText Class="mt-4" Color="Color.Secondary">No viral data found. Let's sync your niche.</MudText>
+                </div>
+            </MudItem>
         }
         else
         {
-            <MudGrid>
-                @* --- AI SPOTLIGHT --- *@
-                <MudItem xs="12">
-                    <MudPaper Class="pa-8 ai-spotlight shadow-none" Elevation="0">
-                        <MudGrid AlignItems="AlignItems.Center">
-                            <MudItem xs="12" md="7">
-                                <MudStack Spacing="2">
-                                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.Rounded.AutoAwesome" Class="fw-bold pa-0">AI INSIGHT - @_userNicheName</MudChip>
-                                    <MudText Typo="Typo.h3" Class="fw-bold mt-2">@(_topTrend?.TrendName ?? "Belum ada tren")</MudText>
-                                    <MudText Typo="Typo.body1" Style="opacity: 0.8; line-height: 1.8;">
-                                        "@_analysisResult"
-                                    </MudText>
-                                </MudStack>
-                            </MudItem>
-                            <MudItem xs="12" md="5">
-                                <MudPaper Class="pa-4 rounded-xl shadow-none" Style="background: rgba(var(--mud-palette-primary-rgb), 0.05); border: 1px dashed var(--mud-palette-primary);">
-                                    <MudText Typo="Typo.caption" Class="fw-bold mb-2 d-block">MOMENTUM SKOR</MudText>
-                                    <div class="text-center mt-2">
-                                        <MudText Typo="Typo.h2" Color="Color.Primary" Class="fw-bold">@(_topTrend?.GrowthScore ?? 0)%</MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Confidence Score di Niche Anda</MudText>
-                                    </div>
-                                </MudPaper>
-                            </MudItem>
-                        </MudGrid>
+            @foreach (var trend in _viralTrends.Take(4))
+            {
+                <MudItem xs="12" md="6" lg="3">
+                    <MudPaper Class="pa-6 bento-card">
+                        <MudStack Spacing="4">
+                            <div class="d-flex justify-space-between align-center">
+                                <span class="@(trend.Platform == "TikTok" ? "badge-tiktok" : "badge-ig")">@trend.Platform</span>
+                                <div class="growth-text">+@trend.GrowthScore%</div>
+                            </div>
+
+                            <MudText Class="trend-title">@trend.TrendName</MudText>
+
+                            @* Mini Sparkline Placeholder - Memberikan kesan data hidup *@
+                            <div style="height: 40px; width: 100%; background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent); border-radius: 8px;" class="d-flex align-end pa-1">
+                                <div style="height: 30%; width: 15%; background: #10B981; border-radius: 2px; margin-right: 2px;"></div>
+                                <div style="height: 50%; width: 15%; background: #10B981; border-radius: 2px; margin-right: 2px;"></div>
+                                <div style="height: 80%; width: 15%; background: #10B981; border-radius: 2px; margin-right: 2px;"></div>
+                                <div style="height: 60%; width: 15%; background: #10B981; border-radius: 2px; margin-right: 2px;"></div>
+                                <div style="height: 100%; width: 15%; background: #10B981; border-radius: 2px;"></div>
+                            </div>
+
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Source: @trend.Platform API</MudText>
+                                <MudIconButton Icon="@Icons.Material.Rounded.ArrowForwardIos" Size="Size.Small" />
+                            </MudStack>
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
-
-                @* --- RISING TRENDS (FILTERED BY NICHE) --- *@
-                <MudItem xs="12" Class="mt-6">
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Tren Naik di @_userNicheName</MudText>
-                    <MudGrid Spacing="3">
-                        @foreach (var item in _trends.Take(3))
-                        {
-                            <MudItem xs="12" md="4">
-                                <MudPaper Class="pa-6 trend-bento-card shadow-none">
-                                    <div class="platform-tag mb-4 @(item.Platform == "TikTok" ? "tiktok-tag" : "ig-tag")">@item.Platform</div>
-                                    <MudText Typo="Typo.h6" Class="fw-bold">@item.TrendName</MudText>
-                                    <MudText Typo="Typo.h5" Color="Color.Success" Class="fw-bold mt-2">+@item.GrowthScore%</MudText>
-                                </MudPaper>
-                            </MudItem>
-                        }
-                    </MudGrid>
-                </MudItem>
-            </MudGrid>
+            }
         }
-    </MudContainer>
-</div>
+
+        @* --- BOTTOM BENTO: ACTIVITY & INSIGHTS --- *@
+        <MudItem xs="12" md="7" Class="mt-4">
+            <MudPaper Class="pa-8 bento-card shadow-none">
+                <MudText Typo="Typo.h5" Class="fw-bold mb-6">Recent Activity</MudText>
+                <MudTimeline TimelinePosition="TimelinePosition.Start" Dense="true" Class="custom-timeline">
+                    @foreach (var notif in _recentNotifs)
+                    {
+                        <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                            <ItemContent>
+                                <MudText Typo="Typo.body2" Class="fw-bold">@notif.Message</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@notif.CreatedAt.ToString("ddd, HH:mm") WIB</MudText>
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="5" Class="mt-4">
+            <MudPaper Class="pa-8 bento-card shadow-none overflow-hidden relative" Style="background: var(--mud-palette-primary); color: white;">
+                <MudIcon Icon="@Icons.Material.Rounded.Lightbulb" Style="position: absolute; right: -10px; top: -10px; font-size: 8rem; opacity: 0.2;" />
+                <MudText Typo="Typo.h5" Class="fw-bold mb-4">AI Smart Insight</MudText>
+                <MudText Typo="Typo.body1" Style="line-height: 1.6; opacity: 0.9;">
+                    Berdasarkan data terbaru, tren <span class="fw-bold">@(_viralTrends.FirstOrDefault()?.TrendName ?? "Niche kamu")</span> sedang memasuki fase "Early-Peak".
+                    <br /><br />
+                    Gunakan sound <span class="fw-bold">@(_viralTrends.FirstOrDefault()?.SoundName ?? "terpopuler")</span> malam ini pukul 19:00 - 21:00 untuk FYP maksimal.
+                </MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Surface" Class="mt-8 rounded-pill px-8" Style="color: var(--mud-palette-primary); font-weight: 700;">
+                    Generate Full Strategy
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
-    private List<SocialTrend> _trends = new();
-    private SocialTrend? _topTrend;
-    private string _analysisResult = "Menunggu analisis AI...";
-    private string _userNicheName = "Niche Anda";
-    private int _currentUserId;
-    private int _currentUserNicheId;
-    private bool _isLoading = true;
-    private bool _isSyncing = false;
-    private int _currentInterval = 24;
+    private string _username = "User";
+    private string _userNicheName = "Umum";
+    private int _userNicheId = 0;
+    private int _userId = 0;
+    private int _totalTrends = 0;
+    private int _viralCount = 0;
+    private DateTime _lastUpdate = DateTime.Now;
+
+    private List<SocialTrend> _viralTrends = new();
+    private List<UserNotification> _recentNotifs = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUserDataAndData();
+        await LoadUserData();
+        await LoadDashboardStats();
     }
 
-    private async Task LoadUserDataAndData()
+    private async Task LoadUserData()
     {
-        _isLoading = true;
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userClaims = authState.User;
+        _username = userClaims.Identity?.Name ?? "User";
 
-        // 1. Ambil User Info dari Claims
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated == true)
+        var idStr = userClaims.FindFirst("UserId")?.Value;
+        if (int.TryParse(idStr, out int id))
         {
-            _currentUserId = int.Parse(user.FindFirst("UserId")?.Value ?? "0");
-
-            // Ambil NicheId dari database agar selalu fresh
-            var userDb = await Repo.GetUserByIdAsync(_currentUserId);
-            if (userDb != null)
+            _userId = id;
+            var user = await Repo.GetUserByIdAsync(_userId);
+            if (user != null)
             {
-                _currentUserNicheId = userDb.NicheId ?? 0;
-                _userNicheName = userDb.Niche?.NicheName ?? "Niche Umum";
+                _userNicheId = user.NicheId ?? 0;
+                _userNicheName = user.Niche?.NicheName ?? "Umum";
             }
         }
-
-        // 2. Ambil Interval Scraping
-        var intervalDb = await Repo.GetSettingAsync("ScrapingIntervalHours");
-        if (int.TryParse(intervalDb, out var result)) _currentInterval = result;
-
-        // 3. AMBIL DATA TREN BERDASARKAN NICHE
-        _trends = await Repo.GetTrendsByNicheAsync(_currentUserNicheId);
-
-        if (_trends.Any())
-        {
-            await ProcessDataForUI();
-        }
-
-        // 4. Auto-Scraping jika data basi
-        var lastTrend = _trends.OrderByDescending(t => t.DiscoveredAt).FirstOrDefault();
-        bool isDataStale = lastTrend == null || (DateTime.Now - lastTrend.DiscoveredAt).Value.TotalHours >= _currentInterval;
-
-        if (isDataStale)
-        {
-            _ = Task.Run(async () => await ExecuteScrapingFlow());
-        }
-
-        _isLoading = false;
-        StateHasChanged();
     }
 
-    private async Task ExecuteScrapingFlow()
+    private async Task LoadDashboardStats()
     {
-        await InvokeAsync(() => { _isSyncing = true; StateHasChanged(); });
-        Console.WriteLine("--- MEMULAI SCRAPING ---"); // LOG BARU
+        // Ambil tren viral dari database
+        _viralTrends = await Repo.GetViralTrendsAsync();
+        _totalTrends = (await Repo.GetTrendsAsync()).Count;
+        _viralCount = _viralTrends.Count;
+        
+        // Ambil 3 notifikasi terakhir
+        var allNotifs = await Repo.GetUserNotificationsAsync(_userId);
+        _recentNotifs = allNotifs.Take(3).ToList();
+    }
 
+    private async Task RefreshData()
+    {
         try
         {
-            var freshData = await Scraper.FetchTrendDataByNiche(_currentUserNicheId);
-
-            if (freshData != null && freshData.Any())
+            Snackbar.Add("Memulai pemindaian tren niche...", Severity.Info);
+            
+            // PERBAIKAN: Mengirim _userNicheId dan _userId ke Scraper
+            var results = await Scraper.FetchTrendDataByNiche(_userNicheId, _userId);
+            
+            if (results.Any())
             {
-                Console.WriteLine($"--- BERHASIL DAPAT {freshData.Count} DATA DARI API ---"); // LOG BARU
-                await Repo.SaveTrendRangeAsync(freshData, _currentUserNicheId);
-                Console.WriteLine("--- BERHASIL SIMPAN KE DATABASE ---"); // LOG BARU
-
-                // Refresh UI
-                _trends = await Repo.GetTrendsByNicheAsync(_currentUserNicheId);
-                await ProcessDataForUI();
+                // Simpan ke DB (TrendRepo akan mengkonversi TrendData ke SocialTrend)
+                await Repo.SaveTrendRangeAsync(results, _userNicheId);
+                
+                // Refresh tampilan
+                await LoadDashboardStats();
+                _lastUpdate = DateTime.Now;
+                Snackbar.Add($"Berhasil menemukan {results.Count} tren baru!", Severity.Success);
             }
             else
             {
-                Console.WriteLine("--- API TIDAK MENGEMBALIKAN DATA (KOSONG) ---");
+                Snackbar.Add("Tidak ada tren baru saat ini.", Severity.Normal);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"--- ERROR SCRAPING: {ex.Message} ---");
-        }
-        finally
-        {
-            await InvokeAsync(() => { _isSyncing = false; StateHasChanged(); });
-        }
-    }
-
-    private async Task ProcessDataForUI()
-    {
-        if (_trends.Any())
-        {
-            _topTrend = _trends.OrderByDescending(t => t.GrowthScore).First();
-            var analysisInput = new TrendData
-            {
-                Keyword = _topTrend.TrendName,
-                Platform = _topTrend.Platform,
-                GrowthScore = _topTrend.GrowthScoreValue
-            };
-            _analysisResult = Analyzer.AnalyzeTrend(analysisInput);
-            ReportService.GenerateReport(_analysisResult);
-        }
-    }
-
-    private async Task RefreshTrends()
-    {
-        if (_isSyncing) return;
-
-        _isSyncing = true;
-        StateHasChanged();
-
-        try
-        {
-            // Panggil langsung tanpa Task.Run untuk debugging agar error muncul di console
-            await ExecuteScrapingFlow();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Error: " + ex.Message, Severity.Error);
-            Console.WriteLine("CRITICAL ERROR: " + ex.ToString());
-        }
-        finally
-        {
-            _isSyncing = false;
-            StateHasChanged();
+            Snackbar.Add("Gagal refresh data: " + ex.Message, Severity.Error);
         }
     }
 }

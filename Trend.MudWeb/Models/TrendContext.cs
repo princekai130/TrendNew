@@ -13,35 +13,27 @@ public partial class TrendContext : DbContext
     {
     }
 
+    // --- DB SETS ---
+    // Gunakan nama property "Notifications" untuk akses di Repo, 
+    // tapi arahkan ke Class "UserNotification"
+    public virtual DbSet<UserNotification> Notifications { get; set; }
+
     public virtual DbSet<Competitor> Competitors { get; set; }
-
     public virtual DbSet<CompetitorPost> CompetitorPosts { get; set; }
-
     public virtual DbSet<ContentRecommendation> ContentRecommendations { get; set; }
-
     public virtual DbSet<Nich> Niches { get; set; }
-
-    // Di dalam TrendContext.cs
-    // Pastikan merujuk ke class model hasil generate, bukan class service
-    public virtual DbSet<Trend.MudWeb.Models.Notifications> Notifications { get; set; }
-
     public virtual DbSet<SocialTrend> SocialTrends { get; set; }
-
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<SystemSetting> SystemSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Competitor>(entity =>
         {
             entity.ToTable("competitors");
-
             entity.Property(e => e.CompetitorId).HasColumnName("competitor_id");
-            entity.Property(e => e.AccountHandle)
-                .IsRequired()
-                .HasColumnName("account_handle");
-            entity.Property(e => e.LastScrapedAt)
-                .HasColumnType("DATETIME")
-                .HasColumnName("last_scraped_at");
+            entity.Property(e => e.AccountHandle).IsRequired().HasColumnName("account_handle");
+            entity.Property(e => e.LastScrapedAt).HasColumnType("DATETIME").HasColumnName("last_scraped_at");
             entity.Property(e => e.Platform).HasColumnName("platform");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -51,16 +43,12 @@ public partial class TrendContext : DbContext
         modelBuilder.Entity<CompetitorPost>(entity =>
         {
             entity.HasKey(e => e.PostId);
-
             entity.ToTable("competitor_posts");
-
             entity.Property(e => e.PostId).HasColumnName("post_id");
             entity.Property(e => e.CompetitorId).HasColumnName("competitor_id");
             entity.Property(e => e.EngagementRate).HasColumnName("engagement_rate");
             entity.Property(e => e.PostUrl).HasColumnName("post_url");
-            entity.Property(e => e.PostedAt)
-                .HasColumnType("DATETIME")
-                .HasColumnName("posted_at");
+            entity.Property(e => e.PostedAt).HasColumnType("DATETIME").HasColumnName("posted_at");
 
             entity.HasOne(d => d.Competitor).WithMany(p => p.CompetitorPosts).HasForeignKey(d => d.CompetitorId);
         });
@@ -68,14 +56,9 @@ public partial class TrendContext : DbContext
         modelBuilder.Entity<ContentRecommendation>(entity =>
         {
             entity.HasKey(e => e.RecommendationId);
-
             entity.ToTable("content_recommendations");
-
             entity.Property(e => e.RecommendationId).HasColumnName("recommendation_id");
-            entity.Property(e => e.IsPremiumOnly)
-                .HasDefaultValue(false)
-                .HasColumnType("BOOLEAN")
-                .HasColumnName("is_premium_only");
+            entity.Property(e => e.IsPremiumOnly).HasDefaultValue(false).HasColumnType("BOOLEAN").HasColumnName("is_premium_only");
             entity.Property(e => e.SuggestedCta).HasColumnName("suggested_cta");
             entity.Property(e => e.SuggestedHook).HasColumnName("suggested_hook");
             entity.Property(e => e.TrendId).HasColumnName("trend_id");
@@ -86,32 +69,20 @@ public partial class TrendContext : DbContext
         modelBuilder.Entity<Nich>(entity =>
         {
             entity.HasKey(e => e.NicheId);
-
             entity.ToTable("niches");
-
             entity.HasIndex(e => e.NicheName, "IX_niches_niche_name").IsUnique();
-
             entity.Property(e => e.NicheId).HasColumnName("niche_id");
-            entity.Property(e => e.NicheName)
-                .IsRequired()
-                .HasColumnName("niche_name");
+            entity.Property(e => e.NicheName).IsRequired().HasColumnName("niche_name");
         });
 
-        modelBuilder.Entity<Notifications>(entity =>
+        // PERBAIKAN: Mapping untuk UserNotification
+        modelBuilder.Entity<UserNotification>(entity =>
         {
             entity.HasKey(e => e.NotificationId);
-
             entity.ToTable("notifications");
-
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("DATETIME")
-                .HasColumnName("created_at");
-            entity.Property(e => e.IsRead)
-                .HasDefaultValue(false)
-                .HasColumnType("BOOLEAN")
-                .HasColumnName("is_read");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnType("DATETIME").HasColumnName("created_at");
+            entity.Property(e => e.IsRead).HasDefaultValue(false).HasColumnType("BOOLEAN").HasColumnName("is_read");
             entity.Property(e => e.Message).HasColumnName("message");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -121,25 +92,17 @@ public partial class TrendContext : DbContext
         modelBuilder.Entity<SocialTrend>(entity =>
         {
             entity.HasKey(e => e.TrendId);
-
             entity.ToTable("social_trends");
-
             entity.Property(e => e.TrendId).HasColumnName("trend_id");
-            entity.Property(e => e.DiscoveredAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("DATETIME")
-                .HasColumnName("discovered_at");
+            entity.Property(e => e.DiscoveredAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnType("DATETIME").HasColumnName("discovered_at");
             entity.Property(e => e.GrowthScore).HasColumnName("growth_score");
-            entity.Property(e => e.IsViral)
-                .HasDefaultValue(false)
-                .HasColumnType("BOOLEAN")
-                .HasColumnName("is_viral");
+            entity.Property(e => e.IsViral).HasDefaultValue(false).HasColumnType("BOOLEAN").HasColumnName("is_viral");
             entity.Property(e => e.NicheId).HasColumnName("niche_id");
             entity.Property(e => e.Platform).HasColumnName("platform");
-            entity.Property(e => e.TrendName)
-                .IsRequired()
-                .HasColumnName("trend_name");
+            entity.Property(e => e.TrendName).IsRequired().HasColumnName("trend_name");
             entity.Property(e => e.TrendType).HasColumnName("trend_type");
+            entity.Property(e => e.SoundName).HasColumnName("sound_name");
+            entity.Property(e => e.SoundUrl).HasColumnName("sound_url");
 
             entity.HasOne(d => d.Niche).WithMany(p => p.SocialTrends).HasForeignKey(d => d.NicheId);
         });
@@ -147,35 +110,20 @@ public partial class TrendContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
-
             entity.HasIndex(e => e.Email, "IX_users_email").IsUnique();
-
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("DATETIME")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Email)
-                .IsRequired()
-                .HasColumnName("email");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnType("DATETIME").HasColumnName("created_at");
+            entity.Property(e => e.Email).IsRequired().HasColumnName("email");
             entity.Property(e => e.NicheId).HasColumnName("niche_id");
-            entity.Property(e => e.PasswordHash)
-                .IsRequired()
-                .HasColumnName("password_hash");
-            entity.Property(e => e.SubscriptionStatus)
-                .HasDefaultValue("Free")
-                .HasColumnName("subscription_status");
-            entity.Property(e => e.Username)
-                .IsRequired()
-                .HasColumnName("username");
+            entity.Property(e => e.PasswordHash).IsRequired().HasColumnName("password_hash");
+            entity.Property(e => e.SubscriptionStatus).HasDefaultValue("Free").HasColumnName("subscription_status");
+            entity.Property(e => e.Username).IsRequired().HasColumnName("username");
 
             entity.HasOne(d => d.Niche).WithMany(p => p.Users).HasForeignKey(d => d.NicheId);
         });
 
         OnModelCreatingPartial(modelBuilder);
     }
-
-    public DbSet<SystemSetting> SystemSettings { get; set; }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
