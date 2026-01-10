@@ -1,8 +1,12 @@
 ﻿@page "/CompetitorWatchlist"
 @using Trend.MudWeb.Models
 @using Trend.MudWeb.Services
+@using System.Security.Claims
+@using System.Globalization
 @inject TrendRepo Repo
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize(Policy = "PremiumOnly")]
 
 <style>
@@ -11,96 +15,91 @@
     .feed-container {
         font-family: 'Outfit', sans-serif;
         padding-top: 20px;
-        max-width: 900px !important; /* Dibuat lebih ramping seperti feed */
+        max-width: 900px !important;
     }
 
     .social-card {
         background: var(--mud-palette-surface);
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 20px !important;
+        border-radius: 24px !important;
         overflow: hidden;
-        transition: transform 0.3s ease;
         margin-bottom: 30px;
+        transition: transform 0.3s ease;
     }
 
-    /* Video Wrapper gaya Mobile */
+        .social-card:hover {
+            transform: translateY(-4px);
+        }
+
     .video-wrapper {
         position: relative;
         background: #000;
-        width: 100%;
-        aspect-ratio: 9 / 13; /* Rasio portrait yang pas untuk web */
-        border-radius: 12px;
+        width: calc(100% - 20px);
+        aspect-ratio: 9 / 13;
+        border-radius: 16px;
         overflow: hidden;
         margin: 10px;
-        width: calc(100% - 20px);
-    }
-
-    .video-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 20px;
-        background: linear-gradient(transparent, rgba(0,0,0,0.8));
-        color: white;
-        pointer-events: none;
     }
 
     .engagement-badge {
         position: absolute;
         top: 15px;
         right: 15px;
-        background: rgba(var(--mud-palette-primary-rgb), 0.9);
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(10px);
         color: white;
         padding: 5px 12px;
-        border-radius: 10px;
-        backdrop-filter: blur(4px);
+        border-radius: 20px;
+        font-size: 0.75rem;
         font-weight: 700;
-        font-size: 0.8rem;
         z-index: 10;
+        border: 1px solid rgba(255,255,255,0.2);
     }
-
-    .platform-icon {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        background: rgba(255,255,255,0.2);
-        backdrop-filter: blur(4px);
-        padding: 5px;
-        border-radius: 50%;
-        z-index: 10;
-    }
-
-    .interaction-btn {
-        transition: all 0.2s;
-    }
-
-        .interaction-btn:hover {
-            color: var(--mud-palette-primary);
-            transform: scale(1.1);
-        }
 </style>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="feed-container">
     <div class="d-flex align-center justify-space-between mb-8">
         <div>
             <MudText Typo="Typo.h4" Class="fw-bold">Competitor Feed</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Memantau konten terbaru dari watchlist Anda.</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Memantau @(_posts?.Count ?? 0) konten terbaru di niche <b>@_userNicheName</b>.
+            </MudText>
         </div>
-        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" Class="rounded-pill">
-            Tambah Kompetitor
-        </MudButton>
+        <MudStack Direction="Row">
+            <MudButton OnClick="AutoDiscoverCompetitors"
+                       Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.AutoAwesome"
+                       Style="border-radius: 12px; text-transform: none;">
+                Rekomendasi AI
+            </MudButton>
+            <MudButton OnClick="OpenAddCompetitorDialog"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Style="border-radius: 12px; text-transform: none;">
+                Tambah Manual
+            </MudButton>
+        </MudStack>
     </div>
 
     <MudGrid Justify="Justify.Center">
-        @if (_posts == null)
+        @if (_isLoading)
         {
-            @for (int i = 0; i < 3; i++)
+            @for (int i = 0; i < 2; i++)
             {
                 <MudItem xs="12" md="6">
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" Class="rounded-xl" />
                 </MudItem>
             }
+        }
+        else if (_posts == null || !_posts.Any())
+        {
+            <MudItem xs="12" Class="text-center py-16">
+                <MudIcon Icon="@Icons.Material.Rounded.PersonSearch" Size="Size.Large" Color="Color.Default" Style="opacity: 0.3; font-size: 5rem;" />
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-4">Belum ada kompetitor yang dipantau.</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Klik tombol tambah untuk mulai memantau akun kompetitor Anda.</MudText>
+            </MudItem>
         }
         else
         {
@@ -108,32 +107,26 @@
             {
                 <MudItem xs="12" md="6">
                     <MudCard Elevation="0" Class="social-card">
-                        @* Header Akun *@
-                        <MudCardHeader Class="pa-4">
+                        <MudCardHeader>
                             <CardHeaderAvatar>
-                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
-                                    @(post.Competitor?.AccountHandle?[0].ToString().ToUpper() ?? "?")
-                                </MudAvatar>
+                                <MudAvatar Color="Color.Primary" Size="Size.Small">@post.Competitor.AccountHandle[1].ToString().ToUpper()</MudAvatar>
                             </CardHeaderAvatar>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.body1" Class="fw-bold">@@@post.Competitor?.AccountHandle</MudText>
-                                <MudText Typo="Typo.caption" Style="opacity: 0.6;">Baru saja diposting • @post.Competitor?.Platform</MudText>
+                                <MudText Typo="Typo.body2"><b>@post.Competitor.AccountHandle</b></MudText>
                             </CardHeaderContent>
                             <CardHeaderActions>
-                                <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Default" />
+                                @* Tombol Hapus Disini *@
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => HandleDelete(post.CompetitorId ?? 0, post.Competitor?.AccountHandle ?? "Unknown"))" />
                             </CardHeaderActions>
                         </MudCardHeader>
 
-                        @* Video Area *@
                         <div class="video-wrapper">
                             <div class="engagement-badge">
-                                <MudIcon Icon="@Icons.Material.Filled.Whatshot" Size="Size.Small" Class="mr-1" />
-                                @post.EngagementRate%
-                            </div>
-
-                            <div class="platform-icon">
-                                <MudIcon Icon="@(post.Competitor?.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)"
-                                         Size="Size.Small" Color="Color.Surface" />
+                                <MudIcon Icon="@Icons.Material.Filled.Whatshot" Size="Size.Small" Class="mr-1" Color="Color.Error" />
+                                @FormatRate(post.EngagementRate) Rate
                             </div>
 
                             @if (!string.IsNullOrEmpty(post.PostUrl))
@@ -141,38 +134,22 @@
                                 var videoId = ExtractVideoId(post.PostUrl);
                                 <iframe src="https://www.tiktok.com/embed/v2/@videoId"
                                         style="width: 100%; height: 100%; border: none;"
-                                        allow="encrypted-media;">
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                        loading="lazy">
                                 </iframe>
                             }
-                            else
-                            {
-                                <div class="d-flex align-center justify-center h-100">
-                                    <MudText Color="Color.Surface" Typo="Typo.caption">Video tidak dapat dimuat</MudText>
-                                </div>
-                            }
-
-                            <div class="video-overlay">
-                                <MudText Typo="Typo.body2" Class="fw-bold">Prediksi AI:</MudText>
-                                <MudText Typo="Typo.caption" Style="opacity: 0.9;">Konten ini memiliki potensi viral tinggi di niche @post.Competitor?.Platform.</MudText>
-                            </div>
                         </div>
 
-                        @* Interaction Bar *@
-                        <MudCardContent Class="px-4 py-2">
-                            <div class="d-flex align-center gap-4 mb-2">
-                                <MudIconButton Icon="@Icons.Material.Filled.AutoGraph" Color="Color.Primary" Size="Size.Medium" Class="interaction-btn pa-1" />
-                                <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" Color="Color.Default" Size="Size.Medium" Class="interaction-btn pa-1" />
-                                <MudSpacer />
-                                <MudIconButton Icon="@Icons.Material.Filled.BookmarkBorder" Color="Color.Default" Size="Size.Medium" Class="interaction-btn pa-1" />
+                        <MudCardContent Class="px-4 pb-6">
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">ESTIMATED REACH</MudText>
+                                <MudText Typo="Typo.caption" Class="fw-bold" Color="Color.Primary">High Engagement</MudText>
                             </div>
-
-                            <MudDivider Class="my-2" Style="opacity: 0.05;" />
-
-                            <div class="d-flex justify-space-between align-center">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Engagement Tracker</MudText>
-                                <MudText Typo="Typo.caption" Class="fw-bold" Color="Color.Primary">Trending</MudText>
-                            </div>
-                            <MudProgressLinear Color="Color.Primary" Value="@(Convert.ToDouble(post.EngagementRate ?? 0))" Class="mt-1 rounded-pill" Style="height: 6px;" />
+                            <MudProgressLinear Color="Color.Primary"
+                                               Value="@GetProgressValue(post.EngagementRate)"
+                                               Class="rounded-pill"
+                                               Style="height: 8px;" />
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -182,20 +159,163 @@
 </MudContainer>
 
 @code {
+    private double FormatRateValue(object? val)
+    {
+        if (val == null) return 0.0;
+        double.TryParse(val.ToString(), out var res);
+        return res;
+    }
     private List<CompetitorPost>? _posts;
-    private int _currentUserId = 1;
+    private int _currentUserId;
+    private string _userNicheName = "";
+    private bool _isLoading = true;
 
-    protected override async Task OnInitializedAsync() => await LoadData();
+    // Fungsi Pembantu untuk menghindari error ToString
+    private string FormatRate(object? val)
+    {
+        if (val == null) return "0.0%";
+        double.TryParse(val.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var result);
+        return result.ToString("F1") + "%";
+    }
+
+    private double GetProgressValue(object? val)
+    {
+        if (val == null) return 0;
+        double.TryParse(val.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var result);
+        return result * 10; // Skala progress bar
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUserInfo();
+        await LoadData();
+    }
+
+    private async Task GetUserInfo()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userClaim = authState.User;
+        if (userClaim.Identity?.IsAuthenticated == true)
+        {
+            var userIdString = userClaim.FindFirst("UserId")?.Value;
+            if (int.TryParse(userIdString, out int id))
+            {
+                _currentUserId = id;
+                var user = await Repo.GetUserByIdAsync(_currentUserId);
+                _userNicheName = user?.Niche?.NicheName ?? "Umum";
+            }
+        }
+    }
 
     private async Task LoadData()
     {
-        _posts = await Repo.GetCompetitorPostsAsync(_currentUserId);
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+            var result = await Repo.GetCompetitorPostsAsync(_currentUserId);
+            _posts = result ?? new List<CompetitorPost>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal memuat feed: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenAddCompetitorDialog()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddCompetitorDialog>("Tambah Kompetitor", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Snackbar.Add("Berhasil menambah kompetitor. Menarik data...", Severity.Info);
+            await LoadData();
+        }
     }
 
     private string ExtractVideoId(string url)
     {
         if (string.IsNullOrEmpty(url)) return "";
-        var parts = url.Split('/');
-        return parts.LastOrDefault()?.Split('?').FirstOrDefault() ?? "";
+
+        try
+        {
+            // 1. Bersihkan parameter query (seperti ?is_from_webapp=1...)
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath; // Mengambil /@user/video/7458123456...
+
+            // 2. Cari bagian yang merupakan sekumpulan angka panjang (ID Video)
+            var segments = path.Split('/');
+            foreach (var segment in segments)
+            {
+                // ID TikTok biasanya berupa angka dengan panjang minimal 15 digit
+                if (!string.IsNullOrEmpty(segment) && segment.All(char.IsDigit) && segment.Length >= 15)
+                {
+                    return segment;
+                }
+            }
+
+            // 3. Fallback jika format URL berbeda (misalnya format /v/12345)
+            var lastPart = segments.LastOrDefault();
+            if (!string.IsNullOrEmpty(lastPart) && lastPart.All(char.IsDigit))
+            {
+                return lastPart;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extracting Video ID from {url}: {ex.Message}");
+        }
+
+        return ""; // Mengembalikan kosong jika tidak ditemukan
+    }
+
+    private async Task AutoDiscoverCompetitors()
+    {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+
+            // Kirim parameter UserId dan NicheId agar dialog tahu niche user apa
+            var parameters = new DialogParameters<AutoDiscoverDialog>
+        {
+            { x => x.UserId, _currentUserId },
+            { x => x.NicheId, 1 } // Ganti dengan variable niche user yang dinamis
+        };
+
+            var dialog = await DialogService.ShowAsync<AutoDiscoverDialog>("Rekomendasi AI", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result.Canceled)
+            {
+                await LoadData(); // Refresh list setelah user memilih akun
+            }
+    }
+
+    private async Task HandleDelete(int competitorId, string handle)
+    {
+        // Konfirmasi dulu agar tidak tidak sengaja terhapus
+        var result = await DialogService.ShowMessageBox(
+            "Hapus Kompetitor",
+            $"Apakah Anda yakin ingin berhenti memantau {handle}?",
+            yesText: "Hapus", cancelText: "Batal");
+
+        if (result == true)
+        {
+            var success = await Repo.DeleteCompetitorAsync(competitorId);
+            if (success)
+            {
+                Snackbar.Add($"Berhasil menghapus {handle}", Severity.Success);
+                await LoadData(); // Refresh tampilan
+            }
+            else
+            {
+                Snackbar.Add("Gagal menghapus kompetitor.", Severity.Error);
+            }
+        }
     }
 }

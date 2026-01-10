@@ -5,8 +5,8 @@ namespace Trend.MudWeb
 {
     /// <summary>
     /// Repositori untuk mengelola operasi basis data aplikasi TRENDZ.
-    /// Menangani logika pengambilan tren, rekomendasi konten, dan analisis kompetitor[cite: 2, 40].
-                /// </summary>
+    /// Menangani logika pengambilan tren, rekomendasi konten, dan analisis kompetitor.
+    /// </summary>
     public class TrendRepo
     {
         private readonly TrendContext _context;
@@ -14,7 +14,7 @@ namespace Trend.MudWeb
         /// <summary>
         /// Inisialisasi instance baru dari <see cref="TrendRepo"/>.
         /// </summary>
-        /// <param name="context">Context database untuk aplikasi Trend[cite: 40].</param>
+        /// <param name="context">Context database untuk aplikasi Trend.</param>
         public TrendRepo(TrendContext context)
         {
             _context = context;
@@ -24,7 +24,7 @@ namespace Trend.MudWeb
 
         /// <summary>
         /// Mengambil tren yang sedang viral (IsViral = true) untuk ditampilkan di widget Home
-                    /// </summary>
+        /// </summary>
         /// <returns>Daftar 3 tren dengan skor pertumbuhan tertinggi</returns>
         public async Task<List<SocialTrend>> GetViralTrendsAsync()
         {
@@ -35,37 +35,19 @@ namespace Trend.MudWeb
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Mengambil tren berdasarkan kategori niche tertentu.
-        /// Fitur ini mendukung kebutuhan 74,1% responden yang ingin mengetahui tren di niche mereka
-                    /// </summary>
-        /// <param name="nicheId">ID unik untuk kategori niche</param>
-        /// <returns>Daftar tren yang difilter berdasarkan niche.</returns>
-        public async Task<List<SocialTrend>> GetTrendsByNicheAsync(int nicheId)
-        {
-            return await _context.SocialTrends
-                .Where(t => t.NicheId == nicheId)
-                .OrderByDescending(t => t.DiscoveredAt)
-                .ToListAsync();
-        }
-
         #endregion
 
         #region Content Recommendations
 
         /// <summary>
         /// Memberikan rekomendasi ide konten otomatis berdasarkan tren terbaru
-        /// Mendukung model monetisasi dengan memisahkan akses Free dan Premium
         /// </summary>
-        /// <param name="isPremiumUser">Status langganan pengguna</param>
-        /// <returns>Daftar rekomendasi ide konten.</returns>
         public async Task<List<ContentRecommendation>> GetLatestRecommendationsAsync(bool isPremiumUser)
         {
             var query = _context.ContentRecommendations
                 .Include(r => r.Trend)
                 .AsQueryable();
 
-            // Memvalidasi hak akses konten berdasarkan status langganan.
             if (!isPremiumUser)
             {
                 query = query.Where(r => r.IsPremiumOnly == false);
@@ -80,12 +62,6 @@ namespace Trend.MudWeb
 
         #region Competitor Tracking
 
-        /// <summary>
-        /// Mengambil performa konten kompetitor untuk membantu talent tetap unggul.
-        /// Sangat diminati oleh 85,2% responden survei.
-        /// </summary>
-        /// <param name="userId">ID pengguna yang melakukan pelacakan.</param>
-        /// <returns>Daftar postingan kompetitor dengan engagement terbaik</returns>
         public async Task<List<CompetitorPost>> GetTopCompetitorPostsAsync(int userId)
         {
             return await _context.CompetitorPosts
@@ -100,12 +76,6 @@ namespace Trend.MudWeb
 
         #region Notifications & Users
 
-        /// <summary>
-        /// Mengambil notifikasi tren real-time yang belum dibaca.
-        /// Menjawab kebutuhan 92,6% responden akan notifikasi tren relevan.
-        /// </summary>
-        /// <param name="userId">ID pengguna target</param>
-        /// <returns>Daftar notifikasi terbaru</returns>
         public async Task<List<Notifications>> GetUserNotificationsAsync(int userId)
         {
             return await _context.Notifications
@@ -114,83 +84,92 @@ namespace Trend.MudWeb
                 .ToListAsync();
         }
 
-
-        /// <summary>
-        /// Mengambil data user untuk mengecek status langganan secara real-time.
-        /// </summary>
         public async Task<User> GetUserByEmailAsync(string email)
         {
             return await _context.Users
                 .Include(u => u.Niche)
-              .FirstOrDefaultAsync(u => u.Email == email);
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        /// <summary>
-        /// Menambahkan user baru ke database.
-        /// </summary>
         public async Task AddUserAsync(User user)
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Mengambil semua daftar niche untuk pilihan saat registrasi.
-        /// </summary>
         public async Task<List<Nich>> GetAllNichesAsync()
         {
             return await _context.Niches.OrderBy(n => n.NicheName).ToListAsync();
         }
 
+        // --- TAMBAHKAN INI: Metode yang hilang untuk UpgradePremium.razor ---
+        public async Task AddNotificationAsync(int userId, string title, string message)
+        {
+            var notification = new Notifications
+            {
+                UserId = userId,
+                Message = $"[{title}] {message}",
+                CreatedAt = DateTime.Now,
+                IsRead = false
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
+
         #endregion
 
         #region Simpan & Ambil Daftar Trend
+
         public async Task<List<SocialTrend>> GetTrendsAsync()
         {
             return await _context.SocialTrends.ToListAsync();
         }
 
-        public async Task SaveTrendRangeAsync(List<TrendData> trends)
+        public async Task SaveTrendRangeAsync(List<TrendData> trends, int nicheId)
         {
             try
             {
+                Console.WriteLine($"[DEBUG] Memproses {trends.Count} data untuk Niche ID: {nicheId}"); // LOG 1
+
                 foreach (var item in trends)
                 {
-                    // Gunakan ToLower() untuk perbandingan yang lebih aman
                     var exists = await _context.SocialTrends
                         .AnyAsync(t => t.TrendName.ToLower() == item.Keyword.ToLower()
-                                  && t.Platform == item.Platform);
+                                        && t.Platform == item.Platform
+                                        && t.NicheId == nicheId);
+
                     if (!exists)
                     {
+                        Console.WriteLine($"[DEBUG] Menyimpan Trend Baru: {item.Keyword} dengan Skor: {item.EngagementScore}"); // LOG 2
                         var newTrend = new SocialTrend
                         {
                             TrendName = item.Keyword.Length > 200 ? item.Keyword.Substring(0, 197) + "..." : item.Keyword,
                             Platform = item.Platform,
-                            GrowthScore = Convert.ToDouble(item.EngagementScore),
+                            GrowthScore = item.EngagementScore,
                             DiscoveredAt = DateTime.Now,
                             IsViral = item.EngagementScore > 80,
-
-                            // UBAH BARIS INI: Harus sesuai dengan CHECK constraint database
+                            NicheId = nicheId,
                             TrendType = "Hashtag"
                         };
                         _context.SocialTrends.Add(newTrend);
                     }
                 }
                 await _context.SaveChangesAsync();
+                Console.WriteLine("[DEBUG] Simpan ke Database SELESAI."); // LOG 3
             }
-            catch (DbUpdateException dbEx)
+            catch (Exception ex)
             {
-                // Ini akan menangkap detail error database yang sebenarnya
-                var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-                throw new Exception($"Database Error: {innerMessage}");
+                Console.WriteLine($"[DEBUG] ERROR DATABASE: {ex.Message}");
+                throw;
             }
         }
 
-        // Tambahkan juga metode pencarian untuk Trend Explorer
+        // --- TAMBAHKAN INI: Metode yang hilang untuk TrendExplorer.razor ---
         public async Task<List<SocialTrend>> SearchTrendsAsync(string searchTerm)
         {
-            // Menggunakan queryable agar eksekusi terjadi di database
-            var query = _context.SocialTrends.AsQueryable();
+            var query = _context.SocialTrends
+                .Include(t => t.Niche)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -201,20 +180,6 @@ namespace Trend.MudWeb
             }
 
             return await query.OrderByDescending(t => t.DiscoveredAt).ToListAsync();
-        }
-
-        public async Task AddNotificationAsync(int userId, string title, string message)
-        {
-            var notification = new Notifications
-            {
-                UserId = userId,
-                // Kita gabungkan Title ke dalam Message karena kolom Title tidak ada di DB
-                Message = $"[{title}] {message}",
-                CreatedAt = DateTime.Now,
-                IsRead = false
-            };
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
         }
 
         #endregion
@@ -235,7 +200,6 @@ namespace Trend.MudWeb
 
         #region Competitor Watchlist Logic
 
-        // Mengambil daftar kompetitor yang dipantau oleh user
         public async Task<List<Competitor>> GetUserCompetitorsAsync(int userId)
         {
             return await _context.Competitors
@@ -243,21 +207,35 @@ namespace Trend.MudWeb
                 .ToListAsync();
         }
 
-        // Mengambil postingan dari kompetitor tertentu dengan engagement tertinggi
         public async Task<List<CompetitorPost>> GetCompetitorPostsAsync(int userId)
         {
             return await _context.CompetitorPosts
-                .Include(p => p.Competitor) // Penting agar data Platform & AccountHandle terbaca
+                .Include(p => p.Competitor)
                 .Where(p => p.Competitor.UserId == userId)
                 .OrderByDescending(p => p.EngagementRate)
                 .ToListAsync();
         }
 
-        // Method untuk menambah kompetitor baru (untuk didemokan)
         public async Task AddCompetitorAsync(Competitor comp)
         {
             _context.Competitors.Add(comp);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteCompetitorAsync(int competitorId)
+        {
+            var comp = await _context.Competitors.FindAsync(competitorId);
+            if (comp == null) return false;
+
+            // Hapus dulu semua postingan terkait kompetitor ini
+            var posts = _context.CompetitorPosts.Where(p => p.CompetitorId == competitorId);
+            _context.CompetitorPosts.RemoveRange(posts);
+
+            // Hapus kompetitornya
+            _context.Competitors.Remove(comp);
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         #endregion
@@ -266,7 +244,6 @@ namespace Trend.MudWeb
 
         public async Task<List<SocialTrend>> GetHotListTrendsAsync()
         {
-            // Mengambil tren yang IsViral true ATAU GrowthScore di atas 80
             return await _context.SocialTrends
                 .Where(t => t.IsViral == true || t.GrowthScore > 80)
                 .OrderByDescending(t => t.GrowthScore)
@@ -285,33 +262,26 @@ namespace Trend.MudWeb
             var igCount = await _context.SocialTrends.CountAsync(t => t.Platform == "Instagram");
 
             return new Dictionary<string, int>
-    {
-        { "Total", totalTrends },
-        { "Viral", viralTrends },
-        { "TikTok", tiktokCount },
-        { "Instagram", igCount }
-    };
+            {
+                { "Total", totalTrends },
+                { "Viral", viralTrends },
+                { "TikTok", tiktokCount },
+                { "Instagram", igCount }
+            };
         }
 
         #endregion
 
         #region System Settings
 
-        /// <summary>
-        /// Mengambil nilai konfigurasi sistem berdasarkan key.
-        /// </summary>
         public async Task<string?> GetSettingAsync(string key)
         {
-            // Mencari di tabel SystemSettings berdasarkan Primary Key (SettingKey)
             var setting = await _context.SystemSettings
                 .FirstOrDefaultAsync(s => s.SettingKey == key);
 
             return setting?.SettingValue;
         }
 
-        /// <summary>
-        /// Memperbarui atau menambah konfigurasi sistem baru.
-        /// </summary>
         public async Task UpdateSettingAsync(string key, string value)
         {
             var existingSetting = await _context.SystemSettings
@@ -319,12 +289,10 @@ namespace Trend.MudWeb
 
             if (existingSetting != null)
             {
-                // Jika sudah ada, update nilainya
                 existingSetting.SettingValue = value;
             }
             else
             {
-                // Jika belum ada, buat baru
                 var newSetting = new SystemSetting
                 {
                     SettingKey = key,
@@ -338,5 +306,75 @@ namespace Trend.MudWeb
 
         #endregion
 
+        #region Simpan Link Video Kompetitor
+
+        public async Task SaveCompetitorPostAsync(int competitorId, string videoUrl)
+        {
+            var exists = await _context.CompetitorPosts
+                .AnyAsync(p => p.PostUrl == videoUrl);
+
+            if (!exists)
+            {
+                var newPost = new CompetitorPost
+                {
+                    CompetitorId = competitorId,
+                    PostUrl = videoUrl,
+                    EngagementRate = new Random().NextDouble() * 10,
+                    PostedAt = DateTime.Now
+                };
+                _context.CompetitorPosts.Add(newPost);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        #endregion
+
+        #region Niche & Trend Management
+
+        public async Task<List<SocialTrend>> GetTrendsByNicheAsync(int nicheId)
+        {
+            return await _context.SocialTrends
+                .Where(t => t.NicheId == nicheId)
+                .OrderByDescending(t => t.DiscoveredAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Nich>> GetNichesAsync()
+        {
+            return await _context.Niches.OrderBy(n => n.NicheName).ToListAsync();
+        }
+
+        public async Task<User?> GetUserByIdAsync(int userId)
+        {
+            return await _context.Users
+                .Include(u => u.Niche)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
+
+        public async Task<Dictionary<string, int>> GetMarketReportStatsByNicheAsync(int nicheId)
+        {
+            var stats = new Dictionary<string, int>();
+
+            // 1. Hitung jumlah tren TikTok di niche ini
+            stats["TikTok"] = await _context.SocialTrends
+                .CountAsync(t => t.NicheId == nicheId && t.Platform == "TikTok");
+
+            // 2. Hitung jumlah tren Instagram di niche ini
+            stats["Instagram"] = await _context.SocialTrends
+                .CountAsync(t => t.NicheId == nicheId && t.Platform == "Instagram");
+
+            // 3. Perbaikan Error: Hitung kompetitor yang dimiliki oleh user-user di niche ini
+            // Kita filter User dulu yang nichenya sesuai, baru hitung kompetitor mereka
+            stats["Competitors"] = await _context.Competitors
+                .CountAsync(c => c.User.NicheId == nicheId);
+
+            // 4. Tambahkan total konten yang sudah terkumpul di niche ini
+            stats["Total Posts"] = await _context.CompetitorPosts
+                .CountAsync(p => p.Competitor.User.NicheId == nicheId);
+
+            return stats;
+        }
+
+        #endregion
     }
 }

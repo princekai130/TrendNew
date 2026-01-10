@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Trend.MudWeb.Models
 @using Trend.MudWeb.Services
-@using System.Timers @* Tambahkan ini untuk Debouncing *@
+@using System.Timers
 @inject TrendRepo Repo
 @inject ISnackbar Snackbar
 @implements IDisposable
@@ -55,33 +55,40 @@
     @* --- HEADER --- *@
     <MudStack Class="mb-8">
         <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -1.5px;">Trend Explorer</MudText>
-        <MudText Typo="Typo.body1" Color="Color.Secondary">Hasil diperbarui secara instan saat Anda mengetik.</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">Telusuri tren viral di berbagai niche industri.</MudText>
     </MudStack>
 
-    @* --- SEARCH & FILTER AREA --- *@
+    @* --- SEARCH & NICHE FILTER AREA --- *@
     <MudStack Spacing="4" Class="mb-10">
         <div class="search-wrapper">
             <MudIcon Icon="@Icons.Material.Rounded.Search" Color="Color.Primary" Class="mr-3" />
             <MudTextField @bind-Value="SearchTerm"
-                          Placeholder="Ketik niche atau topik (cth: AI, Fashion, Gaming...)"
+                          Placeholder="Cari topik spesifik..."
                           Variant="Variant.Text"
                           Underline="false"
                           FullWidth
-                          Immediate="true" /> @* Immediate=true agar setiap ketikan terbaca *@
-            
+                          Immediate="true" />
+
             @if (_isSearching)
             {
                 <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
             }
         </div>
 
+        @* FILTER BERDASARKAN NICHE DARI DATABASE *@
         <div class="d-flex flex-wrap gap-2">
-            @foreach (var filter in _quickFilters)
+            <MudChip T="string"
+                     Text="Semua Niche"
+                     OnClick="@(() => SelectNiche(0))"
+                     Class="@(_selectedNicheId == 0 ? "filter-chip active px-4" : "filter-chip px-4")"
+                     Variant="Variant.Text" />
+
+            @foreach (var niche in _niches)
             {
                 <MudChip T="string"
-                         Text="@filter"
-                         OnClick="@(() => ToggleFilter(filter))"
-                         Class="@(_activeFilter == filter ? "filter-chip active px-4" : "filter-chip px-4")"
+                         Text="@niche.NicheName"
+                         OnClick="@(() => SelectNiche(niche.NicheId))"
+                         Class="@(_selectedNicheId == niche.NicheId ? "filter-chip active px-4" : "filter-chip px-4")"
                          Variant="Variant.Text" />
             }
         </div>
@@ -93,15 +100,21 @@
         <MudGrid>
             @foreach (var trend in _results)
             {
-                <MudItem xs="12" sm="6" md="4" Class="animate__animated animate__fadeIn">
+                <MudItem xs="12" sm="6" md="4">
                     <MudPaper Class="pa-6 trend-card-premium shadow-none">
                         <MudStack Spacing="4">
                             <div class="d-flex justify-space-between align-start">
-                                <MudText Typo="Typo.h6" Class="fw-bold" Style="line-height: 1.2;">@trend.TrendName</MudText>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@trend.TrendName</MudText>
                                 <MudText Typo="Typo.caption" Class="pa-1 rounded" Style="background:rgba(var(--mud-palette-primary-rgb), 0.1); color:var(--mud-palette-primary); font-weight:800;">
                                     @trend.Platform.ToUpper()
                                 </MudText>
                             </div>
+
+                            @* TAMPILKAN NAMA NICHE PADA CARD *@
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Niche: @(trend.Niche?.NicheName ?? "Umum")
+                            </MudText>
+
                             <div class="d-flex justify-space-between align-end">
                                 <MudStack Spacing="0">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">GROWTH</MudText>
@@ -109,7 +122,6 @@
                                 </MudStack>
                                 <MudIcon Icon="@Icons.Material.Outlined.AutoGraph" Color="Color.Success" />
                             </div>
-                            <MudProgressLinear Value="@(Convert.ToDouble(trend.GrowthScore))" Color="Color.Primary" Height="4" Rounded="true" />
                         </MudStack>
                     </MudPaper>
                 </MudItem>
@@ -120,7 +132,7 @@
     {
         <div class="text-center py-16" style="opacity: 0.5;">
             <MudIcon Icon="@Icons.Material.Rounded.SearchOff" Style="font-size: 3rem;" />
-            <MudText Typo="Typo.body1">Tidak ada tren yang cocok dengan pencarian Anda.</MudText>
+            <MudText Typo="Typo.body1">Tidak ada data ditemukan untuk niche ini.</MudText>
         </div>
     }
 </MudContainer>
@@ -130,41 +142,27 @@
     private string SearchTerm
     {
         get => _searchTerm;
-        set
-        {
-            if (_searchTerm == value) return;
-            _searchTerm = value;
-            StartTimer(); @* Trigger timer setiap kali ada perubahan input *@
-        }
+        set { if (_searchTerm == value) return; _searchTerm = value; StartTimer(); }
     }
 
     private bool _isSearching = false;
     private List<SocialTrend> _results = new();
-    private string _activeFilter = "Semua";
+    private List<Nich> _niches = new(); // Menggunakan Nich sesuai model EF Core
+    private int _selectedNicheId = 0; // 0 berarti "Semua"
     private Timer? _debounceTimer;
 
-    private readonly List<string> _quickFilters = new() 
-    { "Semua", "TikTok", "Instagram", "Tech", "Lifestyle", "Business" };
-
-    protected override async Task OnInitializedAsync() => await ExecuteSearch();
-
-    private void StartTimer()
+    protected override async Task OnInitializedAsync()
     {
-        _debounceTimer?.Stop();
-        _debounceTimer?.Dispose();
-
-        _debounceTimer = new Timer(500); @* Tunggu 500ms setelah user berhenti mengetik *@
-        _debounceTimer.Elapsed += OnTimerElapsed;
-        _debounceTimer.AutoReset = false;
-        _debounceTimer.Start();
+        // 1. Ambil daftar niche untuk filter chips
+        _niches = await Repo.GetNichesAsync();
+        // 2. Load data awal
+        await ExecuteSearch();
     }
 
-    private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+    private async Task SelectNiche(int nicheId)
     {
-        await InvokeAsync(async () =>
-        {
-            await ExecuteSearch();
-        });
+        _selectedNicheId = nicheId;
+        await ExecuteSearch();
     }
 
     private async Task ExecuteSearch()
@@ -172,26 +170,38 @@
         _isSearching = true;
         StateHasChanged();
 
-        // Simulasi delay sedikit agar loading terasa
-        _results = await Repo.SearchTrendsAsync(_searchTerm);
+        // Ambil data berdasarkan pencarian
+        var allResults = await Repo.SearchTrendsAsync(_searchTerm);
 
-        if (_activeFilter != "Semua")
+        // Filter berdasarkan Niche jika dipilih (bukan 0)
+        if (_selectedNicheId != 0)
         {
-            _results = _results.Where(t => t.Platform.Contains(_activeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+            _results = allResults.Where(t => t.NicheId == _selectedNicheId).ToList();
+        }
+        else
+        {
+            _results = allResults;
         }
 
         _isSearching = false;
         StateHasChanged();
     }
 
-    private async Task ToggleFilter(string filter)
+    // --- LOGIK DEBOUNCING (Timer) ---
+    private void StartTimer()
     {
-        _activeFilter = filter;
-        await ExecuteSearch();
+        _debounceTimer?.Stop();
+        _debounceTimer?.Dispose();
+        _debounceTimer = new Timer(500);
+        _debounceTimer.Elapsed += OnTimerElapsed;
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Start();
     }
 
-    public void Dispose()
+    private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        _debounceTimer?.Dispose();
+        await InvokeAsync(async () => await ExecuteSearch());
     }
+
+    public void Dispose() => _debounceTimer?.Dispose();
 }

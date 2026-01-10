@@ -1,5 +1,10 @@
 ﻿@page "/TheHotList"
 @using Microsoft.AspNetCore.Authorization
+@using Trend.MudWeb.Models
+@using System.Security.Claims
+@inject TrendRepo Repo
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "PremiumOnly")]
 
 <style>
@@ -49,89 +54,138 @@
     <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
         <MudStack Spacing="0">
             <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -2px;">The Hot List 🔥</MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">Resep konten siap saji berdasarkan tren dengan momentum tertinggi.</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Resep konten eksklusif untuk niche <b>@_userNicheName</b>.</MudText>
         </MudStack>
         <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.AutoAwesome">Premium Access</MudChip>
     </MudStack>
 
-    <MudGrid>
-        @foreach (var trend in _hotTrends)
-        {
-            <MudItem xs="12" md="6" lg="4">
-                <MudPaper Class="pa-6 recipe-card shadow-none">
-                    <div class="viral-badge">HIGH POTENTIAL</div>
+    @if (_isLoading)
+    {
+        <MudGrid>
+            @for (int i = 0; i < 3; i++)
+            {
+                <MudItem xs="12" md="4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="rounded-xl" />
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else if (!_hotTrends.Any())
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mt-10 rounded-xl">
+            Belum ada tren dengan momentum tinggi di niche @_userNicheName hari ini. Silakan cek kembali nanti!
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var trend in _hotTrends)
+            {
+                <MudItem xs="12" md="6" lg="4">
+                    <MudPaper Class="pa-6 recipe-card shadow-none">
+                        <div class="viral-badge">@trend.GrowthScore% MOMENTUM</div>
 
-                    <MudStack Spacing="4">
-                        <div class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Custom.Brands.TikTok" Size="Size.Small" Class="mr-2" />
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">TIKTOK TREND</MudText>
-                        </div>
+                        <MudStack Spacing="4">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@(trend.Platform == "TikTok" ? Icons.Custom.Brands.TikTok : Icons.Custom.Brands.Instagram)" Size="Size.Small" Class="mr-2" />
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@trend.Platform.ToUpper() TREND</MudText>
+                            </div>
 
-                        <MudText Typo="Typo.h5" Class="fw-bold">@trend.Name</MudText>
+                            <MudText Typo="Typo.h5" Class="fw-bold">@trend.TrendName</MudText>
 
-                        <div class="d-flex gap-2">
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Speed" Color="Color.Info">Mudah</MudChip>
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary">Low Comp</MudChip>
-                        </div>
+                            <div class="d-flex gap-2">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Speed" Color="Color.Info">Mudah</MudChip>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error">Viral</MudChip>
+                            </div>
 
-                        <MudDivider Style="opacity: 0.1;" />
+                            <MudDivider Style="opacity: 0.1;" />
 
-                        <div class="d-flex align-center justify-space-between">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">AI Content Idea</MudText>
-                            <MudIconButton Icon="@Icons.Material.Rounded.AutoAwesome"
-                                           Class="ai-magic-btn"
-                                           Size="Size.Small"
-                                           OnClick="@(() => GenerateAIIdeas(trend.Name))" />
-                        </div>
+                            <div class="d-flex align-center justify-space-between">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">AI Content Hook</MudText>
+                                <MudIconButton Icon="@Icons.Material.Rounded.AutoAwesome"
+                                               Class="ai-magic-btn"
+                                               Size="Size.Small"
+                                               OnClick="@(() => GenerateAIIdeas(trend))" />
+                            </div>
 
-                        @if (_isGenerating && _selectedTrend == trend.Name)
-                        {
-                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="rounded-pill" />
-                        }
-                        else if (!string.IsNullOrEmpty(trend.GeneratedIdea) && _selectedTrend == trend.Name)
-                        {
-                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-2" Style="border-radius: 12px; font-size: 0.85rem;">
-                                <b>Hook:</b> @trend.GeneratedIdea
-                            </MudAlert>
-                        }
-                    </MudStack>
-                </MudPaper>
-            </MudItem>
-        }
-    </MudGrid>
+                            @if (_isGenerating && _selectedTrendId == trend.TrendId)
+                            {
+                                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="rounded-pill" />
+                            }
+                            else if (!string.IsNullOrEmpty(trend.TrendType) && trend.TrendType != "Hashtag" && _selectedTrendId == trend.TrendId)
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-2" Style="border-radius: 12px; font-size: 0.85rem;">
+                                    <b>AI Suggestion:</b> @trend.TrendType
+                                </MudAlert>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
 </MudContainer>
 
 @code {
+    private bool _isLoading = true;
     private bool _isGenerating = false;
-    private string _selectedTrend = "";
+    private int _selectedTrendId = 0;
+    private string _userNicheName = "Niche Anda";
+    private List<SocialTrend> _hotTrends = new();
 
-    private List<HotTrendItem> _hotTrends = new()
+    protected override async Task OnInitializedAsync()
     {
-        new HotTrendItem { Name = "AI Avatar Dance", Platform = "TikTok" },
-        new HotTrendItem { Name = "POV: Working in Tech", Platform = "Instagram" },
-        new HotTrendItem { Name = "Minimalist Desk Setup", Platform = "TikTok" }
-    };
+        await LoadHotListData();
+    }
 
-    private async Task GenerateAIIdeas(string trendName)
+    private async Task LoadHotListData()
     {
-        _selectedTrend = trendName;
+        _isLoading = true;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userClaim = authState.User;
+
+            if (userClaim.Identity?.IsAuthenticated == true)
+            {
+                var userIdStr = userClaim.FindFirst("UserId")?.Value;
+                if (int.TryParse(userIdStr, out int userId))
+                {
+                    var user = await Repo.GetUserByIdAsync(userId);
+                    if (user != null)
+                    {
+                        _userNicheName = user.Niche?.NicheName ?? "Umum";
+                        // Ambil tren khusus niche user yang memiliki GrowthScore > 70
+                        var allTrends = await Repo.GetTrendsByNicheAsync(user.NicheId ?? 0);
+                        _hotTrends = allTrends.Where(t => t.GrowthScore > 5).ToList();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal memuat Hot List: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateAIIdeas(SocialTrend trend)
+    {
+        _selectedTrendId = trend.TrendId;
         _isGenerating = true;
         StateHasChanged();
 
-        // SIMULASI PANGGIL AI (Nanti di sini panggil OpenAI API)
-        await Task.Delay(2000);
+        // Simulasi Logika AI Generative
+        await Task.Delay(1500);
 
-        var trend = _hotTrends.First(t => t.Name == trendName);
-        trend.GeneratedIdea = "Tunjukkan transisi cepat antara layar coding yang berantakan ke hasil desain yang estetik dengan sound 'Magic'!";
+        // Kita simpan sementara di kolom TrendType untuk demo hasil AI
+        trend.TrendType = $"Gunakan audio '{trend.TrendName}' dan buat konten transisi 'Before-After' yang menonjolkan estetika niche {_userNicheName}!";
 
         _isGenerating = false;
         StateHasChanged();
-    }
-
-    public class HotTrendItem
-    {
-        public string Name { get; set; }
-        public string Platform { get; set; }
-        public string GeneratedIdea { get; set; }
     }
 }

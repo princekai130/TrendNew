@@ -65,9 +65,12 @@ builder.Services.AddScoped<CustomAuthStateProvider>(sp =>
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("PremiumOnly", policy => policy.RequireClaim("SubscriptionStatus", "Premium"));
+    options.AddPolicy("PremiumOnly", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("Admin") ||
+            context.User.HasClaim("SubscriptionStatus", "Premium")
+        ));
 });
-
 builder.Services.AddControllers();
 
 var app = builder.Build();

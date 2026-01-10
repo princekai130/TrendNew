@@ -1,0 +1,133 @@
+﻿@using Trend.MudWeb.Models
+@using MudBlazor
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar
+@inject ScrapingService Scraper
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Direction="Row" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">AI Competitor Discovery</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            AI telah menganalisis niche Anda dan menemukan akun-akun yang relevan.
+        </MudText>
+
+        @if (_isLoading)
+        {
+            <div class="d-flex flex-column align-center py-10">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                <MudText Typo="Typo.caption" Class="mt-2">Mencari data...</MudText>
+            </div>
+        }
+        else
+        {
+            <MudPaper MaxHeight="300px" Elevation="0" Style="overflow-y:auto; background:transparent;">
+                <MudList T="string">
+                    @foreach (var acc in _recommendedAccounts)
+                    {
+                        <MudListItem OnClick="@(() => ToggleSelect(acc))">
+                            <div class="d-flex align-center justify-space-between w-100">
+                                <MudStack Direction="Row" AlignItems="AlignItems.Center">
+                                    <MudAvatar Color="Color.Info" Variant="Variant.Filled" Size="Size.Small">
+                                        @acc[0].ToString().ToUpper()
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.body2">@@@acc</MudText>
+                                </MudStack>
+                                <MudCheckBox T="bool"
+                                             Value="@_selectedAccounts.Contains(acc)"
+                                             Color="Color.Primary"
+                                             Dense="true" />
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Batal</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@(!_selectedAccounts.Any())"
+                   OnClick="Submit"
+                   Class="rounded-pill px-6 ml-2">
+            Pantau Akun (@_selectedAccounts.Count)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Gunakan Interface IMudDialogInstance untuk menghindari error metadata CS0006
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int UserId { get; set; }
+    [Parameter] public int NicheId { get; set; }
+
+    private List<string> _recommendedAccounts = new();
+    private List<string> _selectedAccounts = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _recommendedAccounts = new List<string> {
+                "tech_insider", "gadget_review_id", "future_daily", "unbox_master"
+            };
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void ToggleSelect(string account)
+    {
+        if (_selectedAccounts.Contains(account))
+            _selectedAccounts.Remove(account);
+        else
+            _selectedAccounts.Add(account);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        try
+        {
+            // 1. Tambahkan akun ke database
+            foreach (var handle in _selectedAccounts)
+            {
+                await Repo.AddCompetitorAsync(new Competitor
+                {
+                    UserId = UserId,
+                    AccountHandle = handle.StartsWith("@") ? handle : "@" + handle,
+                    Platform = "TikTok"
+                });
+            }
+
+            // 2. Tampilkan Snackbar info
+            Snackbar.Add("Menghubungkan ke TikTok AI... Mohon tunggu 10 detik.", Severity.Info);
+
+            // 3. Jalankan Scraper
+            // Kita tidak memakai _ = Task.Run di sini agar kita bisa menunggu sebentar
+            await Task.Run(async () =>
+            {
+                await Scraper.FetchAndSaveCompetitorVideos(UserId);
+            });
+
+            Snackbar.Add("Data berhasil ditarik!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal: " + ex.Message, Severity.Error);
+        }
+    }
+}

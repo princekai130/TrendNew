@@ -1,0 +1,161 @@
+﻿@using Trend.MudWeb.Models
+@using MudBlazor
+@inject TrendRepo Repo
+@inject ISnackbar Snackbar
+@inject ScrapingService Scraper
+@inject AuthenticationStateProvider AuthStateProvider
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+    .dialog-container {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .platform-selector {
+        background: var(--mud-palette-background-grey);
+        border-radius: 12px;
+        padding: 8px;
+    }
+
+    .dialog-header-icon {
+        background: rgba(var(--mud-palette-primary-rgb), 0.1);
+        color: var(--mud-palette-primary);
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .helper-text {
+        font-size: 0.75rem;
+        color: var(--mud-palette-text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+
+<MudDialog Class="dialog-container rounded-xl pa-2">
+    <TitleContent>
+        <div class="d-flex align-center mt-2">
+            <div class="dialog-header-icon mr-4">
+                <MudIcon Icon="@Icons.Material.Rounded.PersonAdd" Size="Size.Medium" />
+            </div>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6" Class="fw-bold">Pantau Kompetitor</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Masukkan username untuk mulai menganalisis konten mereka.</MudText>
+            </MudStack>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4" Class="mt-4">
+            @* INPUT USERNAME *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-1 ml-1">Account Handle</MudText>
+                <MudTextField @bind-Value="_handle"
+                              Placeholder="kaisaribrahim"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Rounded.AlternateEmail"
+                              AdornmentColor="Color.Primary"
+                              Class="bg-surface"
+                              FullWidth="true" />
+                <div class="helper-text mt-2 ml-1">
+                    <MudIcon Icon="@Icons.Material.Rounded.Info" Size="Size.Small" />
+                    <span>Pastikan akun tidak dalam keadaan private.</span>
+                </div>
+            </div>
+
+            @* PLATFORM SELECTOR *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-1 ml-1">Platform Utama</MudText>
+                <MudSelect T="string" @bind-Value="_platform"
+                           Variant="Variant.Outlined"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Class="bg-surface">
+                    <MudSelectItem Value="@("TikTok")">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Custom.Brands.TikTok" Size="Size.Small" Class="mr-2" /> TikTok
+                        </div>
+                    </MudSelectItem>
+                    <MudSelectItem Value="@("Instagram")">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Custom.Brands.Instagram" Size="Size.Small" Class="mr-2" /> Instagram
+                        </div>
+                    </MudSelectItem>
+                </MudSelect>
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel"
+                   Variant="Variant.Text"
+                   Class="rounded-lg px-6"
+                   Style="text-transform: none; font-weight: 600;">
+            Batal
+        </MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Class="rounded-lg px-8 py-2 shadow-none"
+                   Style="text-transform: none; font-weight: 700;">
+            Mulai Pantau
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    private string _handle = "";
+    private string _platform = "TikTok";
+
+    private void Cancel() => MudDialog?.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_handle))
+        {
+            Snackbar.Add("Username tidak boleh kosong!", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            // AMBIL USER ID DARI LOGIN SESSION
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdClaim = authState.User.FindFirst("UserId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                Snackbar.Add("Sesi berakhir, silakan login ulang.", Severity.Error);
+                return;
+            }
+
+            int currentUserId = int.Parse(userIdClaim);
+
+            var newComp = new Competitor
+            {
+                UserId = currentUserId, // Gunakan ID asli user yang login
+                AccountHandle = _handle.StartsWith("@") ? _handle : "@" + _handle,
+                Platform = _platform
+            };
+
+            await Repo.AddCompetitorAsync(newComp);
+            Snackbar.Add("Kompetitor disimpan. Menjalankan AI Scraper...", Severity.Info);
+
+            // Jalankan Scraper khusus untuk user ini
+            _ = Task.Run(async () =>
+            {
+                try { await Scraper.FetchAndSaveCompetitorVideos(currentUserId); }
+                catch (Exception ex) { Console.WriteLine("Scrape Error: " + ex.Message); }
+            });
+
+            MudDialog?.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Gagal: " + ex.Message, Severity.Error);
+        }
+    }
+}

@@ -1,184 +1,115 @@
 ﻿@page "/MarketReport"
-@using Microsoft.AspNetCore.Authorization
 @using Trend.MudWeb.Models
 @using Trend.MudWeb.Services
 @inject TrendRepo Repo
-@attribute [Authorize(Policy = "PremiumOnly")]
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-
-    .report-container {
-        font-family: 'Outfit', sans-serif;
-    }
+    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap');
 
     .report-card {
         background: var(--mud-palette-surface);
+        border-radius: 24px;
         border: 1px solid var(--mud-palette-divider);
-        border-radius: 20px !important;
-        position: relative;
-        overflow: hidden;
+        transition: transform 0.3s ease;
     }
 
-    /* Efek Ikon Transparan di Balik Statistik */
-    .stat-icon-bg {
-        position: absolute;
-        bottom: -10px;
-        right: -10px;
-        font-size: 5rem !important;
-        opacity: 0.05;
-        transform: rotate(-15deg);
-    }
-
-    .strategy-item {
-        padding: 16px;
-        border-radius: 12px;
-        background: var(--mud-palette-background-grey);
-        margin-bottom: 12px;
-        border-left: 4px solid var(--mud-palette-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .chart-container {
-        background: var(--mud-palette-surface);
-        border-radius: 20px;
-        padding: 24px;
-        border: 1px solid var(--mud-palette-divider);
-    }
-
-    .export-btn {
-        border-radius: 12px !important;
-        text-transform: none !important;
-        font-weight: 600 !important;
-        letter-spacing: 0;
+    .stat-value {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        letter-spacing: -1px;
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="report-container mt-10 pb-15">
-    @* HEADER SECTION *@
-    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-10">
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h3" Class="fw-bold" Style="letter-spacing: -1.5px;">Market Intelligence</MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">Deep-dive analisis performa konten dan sebaran tren platform.</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-10 mb-16">
+    <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h3" Class="fw-bold">Market Analysis</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Laporan komprehensif performa niche <b>@_userNiche</b>.</MudText>
         </MudStack>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                   Class="export-btn px-6 py-3 shadow-none">
-            Export Report
-        </MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" Color="Color.Primary" Class="rounded-pill">Export PDF</MudButton>
     </MudStack>
 
     <MudGrid>
-        @if (_stats == null)
+        @* --- STATS SUMMARY --- *@
+        @foreach (var stat in _reportData)
         {
-            <MudItem xs="12"><MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="rounded-pill" /></MudItem>
-        }
-        else
-        {
-            @* --- KARTU STATISTIK (BENTO STYLE) --- *@
             <MudItem xs="12" sm="6" md="3">
-                <MudPaper Class="pa-6 report-card shadow-none" Elevation="0">
-                    <MudIcon Icon="@Icons.Material.Filled.DataExploration" Class="stat-icon-bg" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">TOTAL DATABASE</MudText>
-                    <MudText Typo="Typo.h4" Class="fw-bold mt-2">@_stats["Total"]</MudText>
-                    <MudText Typo="Typo.caption" Style="color: var(--mud-palette-success);">+12% vs last week</MudText>
+                <MudPaper Class="pa-6 report-card shadow-none text-center">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">@stat.Key.ToUpper()</MudText>
+                    <MudText Typo="Typo.h3" Color="Color.Primary" Class="stat-value mt-2">@stat.Value</MudText>
                 </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Class="pa-6 report-card shadow-none" Elevation="0">
-                    <MudIcon Icon="@Icons.Material.Filled.Whatshot" Class="stat-icon-bg" Color="Color.Error" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">VIRAL PEAK</MudText>
-                    <MudText Typo="Typo.h4" Class="fw-bold mt-2" Color="Color.Error">@_stats["Viral"]</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">High momentum detected</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Class="pa-6 report-card shadow-none" Elevation="0">
-                    <MudIcon Icon="@Icons.Custom.Brands.TikTok" Class="stat-icon-bg" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">TIKTOK SHARE</MudText>
-                    <MudText Typo="Typo.h4" Class="fw-bold mt-2">@_stats["TikTok"]</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Dominant platform</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Class="pa-6 report-card shadow-none" Elevation="0">
-                    <MudIcon Icon="@Icons.Custom.Brands.Instagram" Class="stat-icon-bg" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="fw-bold">IG REELS SHARE</MudText>
-                    <MudText Typo="Typo.h4" Class="fw-bold mt-2">@_stats["Instagram"]</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Steady growth</MudText>
-                </MudPaper>
-            </MudItem>
-
-            @* --- VISUALISASI DATA --- *@
-            <MudItem xs="12" md="6">
-                <div class="chart-container h-100">
-                    <div class="d-flex align-center justify-space-between mb-6">
-                        <MudText Typo="Typo.h6" Class="fw-bold">Platform Distribution</MudText>
-                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" />
-                    </div>
-                    <MudChart ChartType="ChartType.Donut"
-                              InputData="@_chartData"
-                              InputLabels="@_chartLabels"
-                              Width="100%"
-                              Height="250px"
-                              LegendPosition="Position.Bottom" />
-                </div>
-            </MudItem>
-
-            @* --- STRATEGIC INSIGHTS --- *@
-            <MudItem xs="12" md="6">
-                <div class="chart-container h-100">
-                    <div class="d-flex align-center justify-space-between mb-6">
-                        <MudText Typo="Typo.h6" Class="fw-bold">Strategic Insight AI</MudText>
-                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">Update: Live</MudChip>
-                    </div>
-
-                    <div class="strategy-item">
-                        <MudIcon Icon="@Icons.Material.Filled.AutoGraph" Color="Color.Primary" Class="mr-4" />
-                        <div>
-                            <MudText Typo="Typo.body2" Class="fw-bold">Market Dominance</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Video berdurasi pendek masih menguasai 70% atensi audiens di kedua platform.</MudText>
-                        </div>
-                    </div>
-
-                    <div class="strategy-item" style="border-left-color: #00bcd4;">
-                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Style="color: #00bcd4;" Class="mr-4" />
-                        <div>
-                            <MudText Typo="Typo.body2" Class="fw-bold">Golden Hours</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Waktu posting terbaik ditemukan pada pukul 19:00 - 21:00 zona waktu lokal.</MudText>
-                        </div>
-                    </div>
-
-                    <div class="strategy-item" style="border-left-color: #ff9800;">
-                        <MudIcon Icon="@Icons.Material.Filled.GroupWork" Style="color: #ff9800;" Class="mr-4" />
-                        <div>
-                            <MudText Typo="Typo.body2" Class="fw-bold">Competition Level</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Tingkat persaingan niche Anda saat ini tergolong @(_stats["Total"] > 10 ? "Tinggi (Saturasi)" : "Rendah (Peluang)").</MudText>
-                        </div>
-                    </div>
-                </div>
             </MudItem>
         }
+
+        @* --- CHART SECTION --- *@
+        <MudItem xs="12" md="8" Class="mt-6">
+            <MudPaper Class="pa-8 report-card shadow-none h-100">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Volume Tren per Platform</MudText>
+                <MudChart ChartType="ChartType.Bar" ChartSeries="@_chartSeries" XAxisLabels="@_chartLabels" Width="100%" Height="300px" />
+            </MudPaper>
+        </MudItem>
+
+        @* --- RECENT ACTIVITY --- *@
+        <MudItem xs="12" md="4" Class="mt-6">
+            <MudPaper Class="pa-8 report-card shadow-none h-100">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Status Niche</MudText>
+                <MudStack Spacing="4">
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.body2">Kesehatan Tren</MudText>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Sangat Stabil</MudChip>
+                    </div>
+                    <MudDivider />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Berdasarkan data terakhir, niche @_userNiche didominasi oleh konten @(_reportData.ContainsKey("TikTok") && _reportData["TikTok"] > 0 ? "TikTok" : "Instagram").
+                        Saran: Fokus pada video durasi pendek.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
     </MudGrid>
 </MudContainer>
 
 @code {
-    private Dictionary<string, int>? _stats;
-    private double[] _chartData = { };
+    private Dictionary<string, int> _reportData = new();
+    private string _userNiche = "Loading...";
+    private List<ChartSeries> _chartSeries = new();
     private string[] _chartLabels = { "TikTok", "Instagram" };
+    private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        _stats = await Repo.GetMarketReportStatsAsync();
-
-        if (_stats != null)
+        _isLoading = true;
+        try
         {
-            _chartData = new double[] { _stats["TikTok"], _stats["Instagram"] };
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdStr = authState.User.FindFirst("UserId")?.Value;
+
+            if (int.TryParse(userIdStr, out int userId))
+            {
+                var user = await Repo.GetUserByIdAsync(userId);
+                _userNiche = user?.Niche?.NicheName ?? "Umum";
+                int nicheId = user?.NicheId ?? 0;
+
+                // 1. Ambil data yang sudah difilter berdasarkan Niche ID
+                _reportData = await Repo.GetMarketReportStatsByNicheAsync(nicheId);
+
+                // 2. Siapkan data Chart
+                _chartSeries.Clear();
+                _chartSeries.Add(new ChartSeries
+                {
+                    Name = "Volume Tren",
+                    Data = new double[] {
+                        _reportData.GetValueOrDefault("TikTok", 0),
+                        _reportData.GetValueOrDefault("Instagram", 0)
+                    }
+                });
+            }
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 }
